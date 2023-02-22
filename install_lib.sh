@@ -1,0 +1,1 @@
+pip install h5py imbalanced-learn scikit-image uuid
