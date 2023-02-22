@@ -144,7 +144,7 @@ if __name__ == "__main__":
     hist_df = pd.DataFrame(history.history)
 
     # or save to csv:
-    hist_csv_file = 'history_resnet50_modelnet40.csv'
+    hist_csv_file = 'history/history_resnet50_modelnet40.csv'
     with open(hist_csv_file, mode='w') as f:
         hist_df.to_csv(f)
 

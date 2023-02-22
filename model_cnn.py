@@ -77,7 +77,7 @@ model.save('cnn_modelnet10.h5',save_format='h5')
 hist_df = pd.DataFrame(history.history)
 
 # or save to csv:
-hist_csv_file = 'history_cnn_modelnet40.csv'
+hist_csv_file = 'history/history_cnn_modelnet40.csv'
 with open(hist_csv_file, mode='w') as f:
     hist_df.to_csv(f)
 
