@@ -1,12 +1,7 @@
 h5py==3.1.0
 imbalanced-learn==0.10.1
-keras==2.11.0
-Keras-Preprocessing==1.1.2
-keras-resnet==0.1.0
 keras-retinanet @ git+https://github.com/mr7495/RetinaNet@6a85690f62f9e504db99dcd04391fa790690c498
 scikit-image==0.19.3
 seaborn==0.12.0
 shapely==2.0.1
-tensorflow==2.11.0
-tensorflow-probability==0.19.0
 uuid==1.30
