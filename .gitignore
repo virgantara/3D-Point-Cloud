@@ -1,0 +1,7 @@
+dataset/**
+pic/**
+.idea/**
+__pycache__/**
+*.h5
+*.csv
+data_voxel**
