@@ -101,12 +101,12 @@ import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
     input_shape = (16,16,16)
-    NUM_CLASSES = 10
+    NUM_CLASSES = 40
     model = ResNet50(input_shape=input_shape, classes=NUM_CLASSES)
     model.summary()
 
     oversample = SMOTE()
-    with h5py.File("data_voxel_10.h5", "r") as hf:
+    with h5py.File("data_voxel_40.h5", "r") as hf:
         X_train = hf["X_train"][:]
         X_train = np.array(X_train)
 
@@ -140,11 +140,11 @@ if __name__ == "__main__":
     history = model.fit(X_train, targets_train, epochs=NUM_EPOCH, verbose=1,
                         validation_split=0.2)
 
-    model.save('resnet50_modelnet10.h5', save_format='h5')
+    model.save('resnet50_modelnet40.h5', save_format='h5')
     hist_df = pd.DataFrame(history.history)
 
     # or save to csv:
-    hist_csv_file = 'history_resnet50_modelnet10.csv'
+    hist_csv_file = 'history_resnet50_modelnet40.csv'
     with open(hist_csv_file, mode='w') as f:
         hist_df.to_csv(f)
 
