@@ -12,12 +12,13 @@ from tensorflow.keras import layers
 from keras.layers import *
 from keras.layers import *
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from Data_ModelNET10_PCD_to_Voxel_HDF5 import *
+# from Data_ModelNET10_PCD_to_Voxel_HDF5 import *
 from imblearn.over_sampling import SMOTE
-from DOConv import *
+# from DOConv import *
+import h5py
 from sklearn.metrics import confusion_matrix, accuracy_score
-import seaborn as sns
-sns.set_style('white')
+# import seaborn as sns
+# sns.set_style('white')
 import uuid
 
 print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
@@ -73,7 +74,7 @@ model.compile(optimizer='adam',
 
 history = model.fit(X_train, targets_train, epochs=NUM_EPOCH,verbose=1,
                 validation_split=0.2)
-model.save('cnn_modelnet10.h5',save_format='h5')
+model.save('cnn_modelnet40.h5',save_format='h5')
 hist_df = pd.DataFrame(history.history)
 
 # or save to csv:
@@ -91,25 +92,26 @@ print("Accuracy: ", accuracy)
 pred = model.predict(X_test)
 # pred = np.argmax(pred, axis=1)
 res = confusion_matrix(np.argmax(targets_test, axis=1), np.argmax(pred, axis=1))
-cm = pd.DataFrame(res, index = range(NUM_CLASSES), columns = range(NUM_CLASSES))
-plt.figure(figsize=(20,20))
-sns.heatmap(cm, annot=True)
-plt.show()
-
-plt.plot(history.history['loss'], label='Categorical crossentropy (training data)')
-plt.plot(history.history['val_loss'], label='Categorical crossentropy (validation data)')
-plt.title('Model performance for 3D Voxel Keras Conv2D (Loss)')
-plt.ylabel('Loss value')
-plt.xlabel('No. epoch')
-plt.legend(['train','test'],loc="upper left")
-plt.show()
-
-# # Plot history: Categorical Accuracy
-plt.plot(history.history['accuracy'], label='Accuracy (training data)')
-plt.plot(history.history['val_accuracy'], label='Accuracy (validation data)')
-plt.title('Model performance for 3D Voxel Keras Conv2D (Accuracy)')
-plt.ylabel('Accuracy value')
-plt.xlabel('No. epoch')
-plt.legend(['train','test'],loc="upper left")
-plt.show()
+print(res)
+# cm = pd.DataFrame(res, index = range(NUM_CLASSES), columns = range(NUM_CLASSES))
+# plt.figure(figsize=(20,20))
+# sns.heatmap(cm, annot=True)
+# plt.show()
+#
+# plt.plot(history.history['loss'], label='Categorical crossentropy (training data)')
+# plt.plot(history.history['val_loss'], label='Categorical crossentropy (validation data)')
+# plt.title('Model performance for 3D Voxel Keras Conv2D (Loss)')
+# plt.ylabel('Loss value')
+# plt.xlabel('No. epoch')
+# plt.legend(['train','test'],loc="upper left")
+# plt.show()
+#
+# # # Plot history: Categorical Accuracy
+# plt.plot(history.history['accuracy'], label='Accuracy (training data)')
+# plt.plot(history.history['val_accuracy'], label='Accuracy (validation data)')
+# plt.title('Model performance for 3D Voxel Keras Conv2D (Accuracy)')
+# plt.ylabel('Accuracy value')
+# plt.xlabel('No. epoch')
+# plt.legend(['train','test'],loc="upper left")
+# plt.show()
 
