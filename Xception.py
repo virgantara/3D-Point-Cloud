@@ -6,6 +6,14 @@ from tensorflow.keras.layers import GlobalAvgPool2D
 from tensorflow.keras import Model
 
 
+
+import h5py
+from imblearn.over_sampling import SMOTE
+import numpy as np
+from keras.utils import to_categorical
+import pandas as pd
+import matplotlib.pyplot as plt
+
 def conv_bn(x, filters, kernel_size, strides=1):
     x = Conv2D(filters=filters,
                kernel_size=kernel_size,
@@ -98,17 +106,9 @@ def exit_flow(tensor, n_classes=1000):
     return x
 
 
-
-import h5py
-from imblearn.over_sampling import SMOTE
-import numpy as np
-from keras.utils import to_categorical
-import pandas as pd
-import matplotlib.pyplot as plt
-
 if __name__ == "__main__":
     # model code
-    NUM_CLASSES = 40
+    NUM_CLASSES = 10
     input = Input(shape=(16, 16, 16))
     x = entry_flow(input)
     x = middle_flow(x)
@@ -118,7 +118,7 @@ if __name__ == "__main__":
     model.summary()
 
     oversample = SMOTE()
-    with h5py.File("data_voxel_40.h5", "r") as hf:
+    with h5py.File("data_voxel_"+str(NUM_CLASSES)+".h5", "r") as hf:
         X_train = hf["X_train"][:]
         X_train = np.array(X_train)
 
@@ -152,11 +152,11 @@ if __name__ == "__main__":
     history = model.fit(X_train, targets_train, epochs=NUM_EPOCH, verbose=1,
                         validation_split=0.2)
 
-    model.save('xception_modelnet40.h5', save_format='h5')
+    model.save('xception_modelnet'+str(NUM_CLASSES)+'.h5', save_format='h5')
     hist_df = pd.DataFrame(history.history)
 
     # or save to csv:
-    hist_csv_file = 'history/history_xception_modelnet40.csv'
+    hist_csv_file = 'history/history_xception_modelnet'+str(NUM_CLASSES)+'.csv'
     with open(hist_csv_file, mode='w') as f:
         hist_df.to_csv(f)
 

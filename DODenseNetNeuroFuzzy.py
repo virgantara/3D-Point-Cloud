@@ -19,9 +19,24 @@ from keras.utils import to_categorical
 import pandas as pd
 import matplotlib.pyplot as plt
 
+# number of neurons as number of Rule will be produce
+n_neurons = 100
+
+# number of features feed to fuzzy Inference Layer
+n_feature = 9
+
+# based of article
+batch_size = 70
+# to get all permutaion
+fRules = list(product([-1.0,0.0,1.0], repeat=n_feature))
+
+# based on article just 100 of them are needed
+out_fRules = random.sample(fRules, n_neurons)
+
+fRules_sigma = K.transpose(out_fRules)
 
 # Creating Densenet121
-def densenet(input_shape, n_classes, filters = 32,mu=3.0, sigma=1.2):
+def densenet(input_shape, n_classes, filters = 32):
 
     #batch norm + relu + conv
     def bn_rl_conv(x, filters, kernel=1, strides=1):
@@ -55,7 +70,10 @@ def densenet(input_shape, n_classes, filters = 32,mu=3.0, sigma=1.2):
 
     feature_maps = Flatten()(x)
     fuzzy_inference = []
-    for i in tqdm(range(filters)):
+    n_fmaps = 32
+    mu = 3.0
+    sigma = 1.0
+    for i in tqdm(range(n_fmaps)):
         f_block = fuzzy_inference_block(output_dim=n_neurons, i_fmap=i, mu=mu, sigma=sigma)(feature_maps)
         fuzzy_inference.append(f_block)
 
@@ -69,21 +87,7 @@ def densenet(input_shape, n_classes, filters = 32,mu=3.0, sigma=1.2):
     model = Model(input, output)
     return model
 
-# number of neurons as number of Rule will be produce
-n_neurons = 100
 
-# number of features feed to fuzzy Inference Layer
-n_feature = 9
-
-# based of article
-batch_size = 70
-# to get all permutaion
-fRules = list(product([-1.0,0.0,1.0], repeat=n_feature))
-
-# based on article just 100 of them are needed
-out_fRules = random.sample(fRules, n_neurons)
-
-fRules_sigma = K.transpose(out_fRules)
 
 class fuzzy_inference_block(tf.keras.layers.Layer):
     def __init__(self, output_dim, i_fmap, mu, sigma):
@@ -150,18 +154,18 @@ if __name__ == "__main__":
 
     NUM_EPOCH = 50
 
-    model.compile(optimizer='adam',
+    model.compile(optimizer='rmsprop',
                   loss='categorical_crossentropy',
                   metrics=['accuracy'])
 
     history = model.fit(X_train, targets_train, epochs=NUM_EPOCH, verbose=1,
                         validation_split=0.2)
 
-    model.save('densenet121_modelnet'+str(NUM_CLASSES)+'.h5', save_format='h5')
+    # model.save('densenet121_modelnet'+str(NUM_CLASSES)+'.h5', save_format='h5')
     hist_df = pd.DataFrame(history.history)
 
     # or save to csv:
-    hist_csv_file = 'history_densenet121_modelnet'+str(NUM_CLASSES)+'.csv'
+    hist_csv_file = 'history_do_neuro_fuzzy_densenet121_modelnet'+str(NUM_CLASSES)+'.csv'
     with open(hist_csv_file, mode='w') as f:
         hist_df.to_csv(f)
 
