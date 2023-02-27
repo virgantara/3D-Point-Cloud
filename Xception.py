@@ -132,10 +132,10 @@ if __name__ == "__main__":
         # Determine sample shape
         sample_shape = (16, 16, 16)
 
-        X_train, targets_train = oversample.fit_resample(X_train, targets_train)
+        # X_train, targets_train = oversample.fit_resample(X_train, targets_train)
         X_train = np.array(X_train)
 
-        X_test, targets_test = oversample.fit_resample(X_test, targets_test)
+        # X_test, targets_test = oversample.fit_resample(X_test, targets_test)
 
         X_train = X_train.reshape(X_train.shape[0], 16, 16, 16)
         X_test = X_test.reshape(X_test.shape[0], 16, 16, 16)

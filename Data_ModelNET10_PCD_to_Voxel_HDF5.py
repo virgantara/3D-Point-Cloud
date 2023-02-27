@@ -14,6 +14,7 @@ from VoxelGrid import VoxelGrid
 
 from pathlib import Path
 
+VOXEL_SIZE = 20
 
 def normalize_pc_range(pcd_np):
     scaler = MinMaxScaler()
@@ -48,7 +49,7 @@ def pcd_to_voxel(path):
     pcd_np = np.asarray(pcd.points)
     pcd_np = np.array(normalize_pc_range(pcd_np))
     # VOXELIZATION
-    voxel_grid = VoxelGrid(pcd_np, x_y_z=[16, 16, 16])
+    voxel_grid = VoxelGrid(pcd_np, x_y_z=[VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE])
     voxel_2d = np.array(voxel_grid.vector[:, :, :])
     voxel_2d = voxel_2d.reshape(-1)
     voxel_2d = np.where(voxel_2d > 0.0, 1, 0)
@@ -120,18 +121,18 @@ def array_to_color(array, cmap="Oranges"):
 DATA_DIR = "dataset/modelnet10_pcd"
 #
 #
-generate_hdf5(DATA_DIR, "data_voxel_10.h5")
-# X_train, y_train, X_test, y_test= read_hdf5("data_voxel_10.h5")
+generate_hdf5(DATA_DIR, "data_voxel_10_"+str(VOXEL_SIZE)+".h5")
+# X_train, y_train, X_test, y_test= read_hdf5("data_voxel_10_8.h5")
 #
 # #
-# # X_train = rgb_data_transform(X_train)
-# # print(X_train[0])
+# X_train = rgb_data_transform(X_train)
+# print(X_train[0])
 # X_train = X_train.reshape(X_train.shape[0], 16, 16, 16)
-# print(X_train.shape)
-# print(y_train.shape)
-# print(y_train[0])
+# # print(X_train.shape)
+# # print(y_train.shape)
+# # print(y_train[0])
 # data = X_train[0]
-# print(data)
+# print(X_train.shape)
 #
 # fig = plt.figure()
 # ax = fig.add_subplot(projection='3d')

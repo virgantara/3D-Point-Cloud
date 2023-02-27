@@ -36,6 +36,37 @@ out_fRules = random.sample(fRules, n_neurons)
 fRules_sigma = K.transpose(out_fRules)
 
 # Creating Densenet121
+
+
+
+
+class fuzzy_inference_block(tf.keras.layers.Layer):
+    def __init__(self, output_dim, i_fmap, mu, sigma):
+        self.output_dim = output_dim
+        self.index = i_fmap
+        self.mu = mu
+        self.sigma = sigma
+
+        super(fuzzy_inference_block, self).__init__()
+
+    def build(self, input_shape):
+        self.mu_map = fRules_sigma * self.mu
+        self.sigma_map = tf.ones((n_feature, self.output_dim)) * self.sigma
+
+        super().build(input_shape)
+
+    def call(self, inputs):
+        fMap = inputs[:, n_feature * (self.index):n_feature * (self.index + 1)]
+        # create variables for processing
+        aligned_x = K.repeat_elements(K.expand_dims(fMap, axis=-1), self.output_dim, -1)
+        aligned_c = self.mu_map
+        aligned_s = self.sigma_map
+
+        # calculate output of each neuron (fuzzy rule)
+        phi = K.exp(-K.sum(K.square(aligned_x - aligned_c) / (2 * K.square(aligned_s)),
+                           axis=-2, keepdims=False))
+        return phi
+
 def densenet(input_shape, n_classes, filters = 32):
 
     #batch norm + relu + conv
@@ -70,7 +101,7 @@ def densenet(input_shape, n_classes, filters = 32):
 
     feature_maps = Flatten()(x)
     fuzzy_inference = []
-    n_fmaps = 32
+    n_fmaps = 64
     mu = 3.0
     sigma = 1.0
     for i in tqdm(range(n_fmaps)):
@@ -86,36 +117,6 @@ def densenet(input_shape, n_classes, filters = 32):
 
     model = Model(input, output)
     return model
-
-
-
-class fuzzy_inference_block(tf.keras.layers.Layer):
-    def __init__(self, output_dim, i_fmap, mu, sigma):
-        self.output_dim = output_dim
-        self.index = i_fmap
-        self.mu = mu
-        self.sigma = sigma
-
-        super(fuzzy_inference_block, self).__init__()
-
-    def build(self, input_shape):
-        self.mu_map = fRules_sigma * self.mu
-        self.sigma_map = tf.ones((n_feature, self.output_dim)) * self.sigma
-
-        super().build(input_shape)
-
-    def call(self, inputs):
-        fMap = inputs[:, n_feature * (self.index):n_feature * (self.index + 1)]
-        # create variables for processing
-        aligned_x = K.repeat_elements(K.expand_dims(fMap, axis=-1), self.output_dim, -1)
-        aligned_c = self.mu_map
-        aligned_s = self.sigma_map
-
-        # calculate output of each neuron (fuzzy rule)
-        phi = K.exp(-K.sum(K.square(aligned_x - aligned_c) / (2 * K.square(aligned_s)),
-                           axis=-2, keepdims=False))
-        return phi
-
 
 if __name__ == "__main__":
 
