@@ -30,7 +30,7 @@ n_neurons = 100
 
 # number of features feed to fuzzy Inference Layer
 n_feature = 9
-
+VOXEL_SIZE = 16
 # based of article
 batch_size = 70
 # to get all permutaion
@@ -71,7 +71,7 @@ class fuzzy_inference_block(tf.keras.layers.Layer):
 
 NUM_CLASSES = 10
 oversample = SMOTE()
-with h5py.File("data_voxel_"+str(NUM_CLASSES)+"_4.h5", "r") as hf:
+with h5py.File("data_voxel_"+str(NUM_CLASSES)+"_"+str(VOXEL_SIZE)+".h5", "r") as hf:
     X_train = hf["X_train"][:]
     X_train = np.array(X_train)
 
@@ -83,15 +83,15 @@ with h5py.File("data_voxel_"+str(NUM_CLASSES)+"_4.h5", "r") as hf:
     targets_test = hf["y_test"][:]
     test_y = targets_test
     # Determine sample shape
-    sample_shape = (32, 32, 32)
+    sample_shape = (VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE)
 
     X_train, targets_train = oversample.fit_resample(X_train, targets_train)
     X_train = np.array(X_train)
 
     X_test, targets_test = oversample.fit_resample(X_test, targets_test)
 
-    X_train = X_train.reshape(X_train.shape[0], 32, 32, 32)
-    X_test = X_test.reshape(X_test.shape[0], 32, 32, 32)
+    X_train = X_train.reshape(X_train.shape[0], VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE)
+    X_test = X_test.reshape(X_test.shape[0], VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE)
 
     targets_train = to_categorical(targets_train).astype(np.int32)
     targets_test = to_categorical(targets_test).astype(np.int32)
@@ -141,7 +141,7 @@ def get_do_block(x_input, input_channels, output_channels):
     x = get_top(x)
     x = tf.keras.layers.DepthwiseConv2D(kernel_size=(1, 3), padding='same', use_bias=False)(x)
     x = get_top(x)
-    x = tf.keras.layers.MaxPooling2D(pool_size=(2, 1), strides=(2, 1))(x)
+    x = tf.keras.layers.MaxPooling2D(pool_size=(1, 1), strides=(2, 1))(x)
     x = tf.keras.layers.DepthwiseConv2D(kernel_size=(3, 1), padding='same', use_bias=False)(x)
     x = get_top(x)
     x = DOConv2D(output_channels, kernel_size=(2, 1), strides=(1, 2), padding='same', use_bias=False)(x)
@@ -171,7 +171,7 @@ def EffNet(input_shape, num_classes, plot_model=False):
     # neuro fuzzy inference
     mu = 3.0
     sigma = 1.0
-    n_femap = 64
+    n_femap = VOXEL_SIZE * 2
     #     feature_maps = Flatten()(x)
     fuzzy_inference = []
     for i in tqdm(range(n_femap)):
@@ -198,7 +198,7 @@ def get_model(input_shape, nclasses=10):
 # input_shape = (16,16,16)
 
 
-input_shape = 32, 32, 32
+input_shape = VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE
 
 model = get_model(input_shape=input_shape, nclasses=NUM_CLASSES)
 tf.keras.utils.plot_model(model,show_shapes=True)
