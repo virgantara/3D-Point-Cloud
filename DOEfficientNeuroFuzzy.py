@@ -141,7 +141,7 @@ def get_do_block(x_input, input_channels, output_channels):
     x = get_top(x)
     x = tf.keras.layers.DepthwiseConv2D(kernel_size=(1, 3), padding='same', use_bias=False)(x)
     x = get_top(x)
-    x = tf.keras.layers.MaxPooling2D(pool_size=(1, 1), strides=(2, 1))(x)
+    x = tf.keras.layers.MaxPooling2D(pool_size=(2, 1), strides=(2, 1))(x)
     x = tf.keras.layers.DepthwiseConv2D(kernel_size=(3, 1), padding='same', use_bias=False)(x)
     x = get_top(x)
     x = DOConv2D(output_channels, kernel_size=(2, 1), strides=(1, 2), padding='same', use_bias=False)(x)
@@ -166,12 +166,16 @@ def EffNet(input_shape, num_classes, plot_model=False):
     x = get_do_block(x_input, 32, 64)
     x = get_do_block(x, 64, 128)
     x = get_do_block(x, 128, 256)
-    x = tf.keras.layers.Flatten()(x)
 
+    # x = GlobalAveragePooling2D()(x)
+    x = tf.keras.layers.Flatten()(x)
+    # print(x.shape)
     # neuro fuzzy inference
     mu = 3.0
     sigma = 1.0
-    n_femap = VOXEL_SIZE * 2
+    n_femap = 64
+    if VOXEL_SIZE < 8:
+        n_femap = VOXEL_SIZE * 2
     #     feature_maps = Flatten()(x)
     fuzzy_inference = []
     for i in tqdm(range(n_femap)):

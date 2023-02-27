@@ -73,7 +73,7 @@ def densenet(input_shape, n_classes, filters = 32):
     def bn_rl_conv(x, filters, kernel=1, strides=1):
         x = BatchNormalization()(x)
         x = ReLU()(x)
-        x = DOConv2D(filters, kernel, strides=strides, padding='same')(x)
+        x = Conv2D(filters, kernel, strides=strides, padding='same')(x)
         return x
 
 
@@ -101,7 +101,7 @@ def densenet(input_shape, n_classes, filters = 32):
 
     feature_maps = Flatten()(x)
     fuzzy_inference = []
-    n_fmaps = 64
+    n_fmaps = 32
     mu = 3.0
     sigma = 1.0
     for i in tqdm(range(n_fmaps)):
@@ -155,7 +155,7 @@ if __name__ == "__main__":
 
     NUM_EPOCH = 50
 
-    model.compile(optimizer='rmsprop',
+    model.compile(optimizer='adam',
                   loss='categorical_crossentropy',
                   metrics=['accuracy'])
 
