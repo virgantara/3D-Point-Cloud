@@ -205,10 +205,10 @@ def get_model(input_shape, nclasses=10):
 input_shape = VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE
 
 model = get_model(input_shape=input_shape, nclasses=NUM_CLASSES)
-tf.keras.utils.plot_model(model,show_shapes=True)
+# tf.keras.utils.plot_model(model,show_shapes=True)
 model.summary()
 
-model.compile(optimizer='adam',
+model.compile(optimizer=tf.keras.optimizers.RMSprop(),
               loss='categorical_crossentropy',
               metrics=['accuracy'])
 
