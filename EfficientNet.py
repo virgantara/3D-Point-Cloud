@@ -143,11 +143,11 @@ history = model.fit(X_train, targets_train, epochs=NUM_EPOCH, verbose=1,
                     validation_split=0.3)
 #
 #
-# # hist_df = pd.DataFrame(history.history)
-# # hist_csv_file = 'history_neuro_fuzzy_efficientnet_modelnet'+str(NUM_CLASSES)+'.csv'
-# # with open(hist_csv_file, mode='w') as f:
-# #     hist_df.to_csv(f)
-#
+hist_df = pd.DataFrame(history.history)
+hist_csv_file = 'history_efficientnet_modelnet'+str(NUM_CLASSES)+'.csv'
+with open(hist_csv_file, mode='w') as f:
+    hist_df.to_csv(f)
+
 loss, accuracy = model.evaluate(X_test, targets_test)
 
 print(loss, accuracy)

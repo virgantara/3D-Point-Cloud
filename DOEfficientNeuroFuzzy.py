@@ -30,7 +30,7 @@ n_neurons = 100
 
 # number of features feed to fuzzy Inference Layer
 n_feature = 9
-VOXEL_SIZE = 16
+VOXEL_SIZE = 8
 # based of article
 batch_size = 70
 # to get all permutaion
@@ -174,7 +174,7 @@ def EffNet(input_shape, num_classes, plot_model=False):
     mu = 3.0
     sigma = 1.0
     n_femap = 64
-    if VOXEL_SIZE < 8:
+    if VOXEL_SIZE <= 8:
         n_femap = VOXEL_SIZE * 2
     #     feature_maps = Flatten()(x)
     fuzzy_inference = []
@@ -217,10 +217,10 @@ history = model.fit(X_train, targets_train, epochs=NUM_EPOCH, verbose=1,
                     validation_split=0.3)
 #
 #
-# # hist_df = pd.DataFrame(history.history)
-# # hist_csv_file = 'history_neuro_fuzzy_efficientnet_modelnet'+str(NUM_CLASSES)+'.csv'
-# # with open(hist_csv_file, mode='w') as f:
-# #     hist_df.to_csv(f)
+# hist_df = pd.DataFrame(history.history)
+# hist_csv_file = 'history_neuro_fuzzy_efficientnet_modelnet'+str(NUM_CLASSES)+'.csv'
+# with open(hist_csv_file, mode='w') as f:
+#     hist_df.to_csv(f)
 #
 loss, accuracy = model.evaluate(X_test, targets_test)
 
