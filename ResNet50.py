@@ -12,6 +12,14 @@ from tensorflow.keras.layers import Input, Add, Dense, Dropout, Activation, Zero
 from tensorflow.keras.callbacks import ModelCheckpoint, LearningRateScheduler, EarlyStopping, ReduceLROnPlateau
 from tensorflow.keras.initializers import glorot_uniform
 from tensorflow.keras.models import Sequential, load_model, Model
+
+import h5py
+from imblearn.over_sampling import SMOTE
+import numpy as np
+from keras.utils import to_categorical
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn import metrics
 def identity_block(X, f, filters, stage, block):
     conv_name_base = 'res' + str(stage) + block + '_branch'
     bn_name_base = 'bn' + str(stage) + block + '_branch'
@@ -92,18 +100,12 @@ def ResNet50(input_shape = (64, 64, 3), classes = 10):
     X = Dense(classes, activation='softmax', name='fc' + str(classes), kernel_initializer = glorot_uniform(seed=0))(X)
     model = Model(inputs = X_input, outputs = X, name='ResNet50')
     return model
-import h5py
-from imblearn.over_sampling import SMOTE
-import numpy as np
-from keras.utils import to_categorical
-import pandas as pd
-import matplotlib.pyplot as plt
+
 
 if __name__ == "__main__":
     input_shape = (16,16,16)
     NUM_CLASSES = 10
-    model = ResNet50(input_shape=input_shape, classes=NUM_CLASSES)
-    model.summary()
+
 
     oversample = SMOTE()
     with h5py.File("data_voxel_"+str(NUM_CLASSES)+".h5", "r") as hf:
@@ -132,39 +134,51 @@ if __name__ == "__main__":
         targets_test = to_categorical(targets_test).astype(np.int32)
 
     NUM_EPOCH = 50
+    is_training = False
+    if is_training:
+        model = ResNet50(input_shape=input_shape, classes=NUM_CLASSES)
+        model.summary()
+        model.compile(optimizer='adam',
+                      loss='categorical_crossentropy',
+                      metrics=['accuracy'])
 
-    model.compile(optimizer='adam',
-                  loss='categorical_crossentropy',
-                  metrics=['accuracy'])
+        history = model.fit(X_train, targets_train, epochs=NUM_EPOCH, verbose=1,
+                            validation_split=0.2)
 
-    history = model.fit(X_train, targets_train, epochs=NUM_EPOCH, verbose=1,
-                        validation_split=0.2)
+        model.save('resnet50_modelnet'+str(NUM_CLASSES)+'.h5', save_format='h5')
+        hist_df = pd.DataFrame(history.history)
+        hist_csv_file = 'history/history_resnet50_modelnet'+str(NUM_CLASSES)+'.csv'
+        with open(hist_csv_file, mode='w') as f:
+            hist_df.to_csv(f)
 
-    model.save('resnet50_modelnet'+str(NUM_CLASSES)+'.h5', save_format='h5')
-    hist_df = pd.DataFrame(history.history)
+        plt.plot(history.history['loss'], label='Categorical crossentropy (training data)')
+        plt.plot(history.history['val_loss'], label='Categorical crossentropy (validation data)')
+        plt.title('Model performance for 3D Voxel Keras Conv2D (Loss)')
+        plt.ylabel('Loss value')
+        plt.xlabel('No. epoch')
+        plt.legend(['train', 'test'], loc="upper left")
+        plt.show()
 
-    # or save to csv:
-    hist_csv_file = 'history/history_resnet50_modelnet'+str(NUM_CLASSES)+'.csv'
-    with open(hist_csv_file, mode='w') as f:
-        hist_df.to_csv(f)
+        # # Plot history: Categorical Accuracy
+        plt.plot(history.history['accuracy'], label='Accuracy (training data)')
+        plt.plot(history.history['val_accuracy'], label='Accuracy (validation data)')
+        plt.title('Model performance for 3D Voxel Keras Conv2D (Accuracy)')
+        plt.ylabel('Accuracy value')
+        plt.xlabel('No. epoch')
+        plt.legend(['train', 'test'], loc="upper left")
+        plt.show()
+    else:
+        model = tf.keras.models.load_model("models/resnet50_modelnet10.h5")
 
     loss, accuracy = model.evaluate(X_test, targets_test)
 
     print(loss, accuracy)
+    labels = ['bathtub', 'bed', 'chair', 'desk', 'dresser', 'monitor', 'night_stand', 'sofa', 'table', 'toilet']
+    pred = model.predict(X_test)
+    pred = np.argmax(pred, axis=1)
 
-    plt.plot(history.history['loss'], label='Categorical crossentropy (training data)')
-    plt.plot(history.history['val_loss'], label='Categorical crossentropy (validation data)')
-    plt.title('Model performance for 3D Voxel Keras Conv2D (Loss)')
-    plt.ylabel('Loss value')
-    plt.xlabel('No. epoch')
-    plt.legend(['train', 'test'], loc="upper left")
-    plt.show()
+    y = np.argmax(targets_test, axis=1)
 
-    # # Plot history: Categorical Accuracy
-    plt.plot(history.history['accuracy'], label='Accuracy (training data)')
-    plt.plot(history.history['val_accuracy'], label='Accuracy (validation data)')
-    plt.title('Model performance for 3D Voxel Keras Conv2D (Accuracy)')
-    plt.ylabel('Accuracy value')
-    plt.xlabel('No. epoch')
-    plt.legend(['train', 'test'], loc="upper left")
-    plt.show()
+    report = metrics.classification_report(y, pred, target_names=labels)
+    print(report)
+

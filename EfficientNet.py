@@ -23,6 +23,7 @@ import gc
 import os
 import scipy
 import random
+from sklearn import metrics
 
 VOXEL_SIZE = 16
 
@@ -131,40 +132,58 @@ def get_model(input_shape, nclasses=10):
 
 input_shape = VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE
 
-model = get_model(input_shape=input_shape, nclasses=NUM_CLASSES)
-model.summary()
+is_training = False
+if is_training:
+    model = get_model(input_shape=input_shape, nclasses=NUM_CLASSES)
+    model.summary()
 
-model.compile(optimizer='adam',
-              loss='categorical_crossentropy',
-              metrics=['accuracy'])
+    model.compile(optimizer='adam',
+                  loss='categorical_crossentropy',
+                  metrics=['accuracy'])
 
 
-history = model.fit(X_train, targets_train, epochs=NUM_EPOCH, verbose=1,
-                    validation_split=0.3)
-#
-#
-hist_df = pd.DataFrame(history.history)
-hist_csv_file = 'history_efficientnet_modelnet'+str(NUM_CLASSES)+'.csv'
-with open(hist_csv_file, mode='w') as f:
-    hist_df.to_csv(f)
+    history = model.fit(X_train, targets_train, epochs=NUM_EPOCH, verbose=1,
+                        validation_split=0.3)
+    #
+    #
+
+    model.save("models/efficientnet_modelnet"+str(NUM_CLASSES)+".h5")
+    hist_df = pd.DataFrame(history.history)
+    hist_csv_file = 'history_efficientnet_modelnet'+str(NUM_CLASSES)+'.csv'
+    with open(hist_csv_file, mode='w') as f:
+        hist_df.to_csv(f)
+
+    # plt.plot(history.history['loss'], label='Categorical crossentropy (training data)')
+    # plt.plot(history.history['val_loss'], label='Categorical crossentropy (validation data)')
+    # plt.title('Model performance for 3D Voxel Keras Conv2D (Loss)')
+    # plt.ylabel('Loss value')
+    # plt.xlabel('No. epoch')
+    # plt.legend(['train', 'test'], loc="upper left")
+    # plt.show()
+    #
+    # # # Plot history: Categorical Accuracy
+    # plt.plot(history.history['accuracy'], label='Accuracy (training data)')
+    # plt.plot(history.history['val_accuracy'], label='Accuracy (validation data)')
+    # plt.title('Model performance for 3D Voxel Keras Conv2D (Accuracy)')
+    # plt.ylabel('Accuracy value')
+    # plt.xlabel('No. epoch')
+    # plt.legend(['train', 'test'], loc="upper left")
+    # plt.show()
+
+else:
+    model = tf.keras.models.load_model("models/efficientnet_modelnet"+str(NUM_CLASSES)+".h5")
 
 loss, accuracy = model.evaluate(X_test, targets_test)
 
 print(loss, accuracy)
-#
-# plt.plot(history.history['loss'], label='Categorical crossentropy (training data)')
-# plt.plot(history.history['val_loss'], label='Categorical crossentropy (validation data)')
-# plt.title('Model performance for 3D Voxel Keras Conv2D (Loss)')
-# plt.ylabel('Loss value')
-# plt.xlabel('No. epoch')
-# plt.legend(['train', 'test'], loc="upper left")
-# plt.show()
-#
-# # # Plot history: Categorical Accuracy
-# plt.plot(history.history['accuracy'], label='Accuracy (training data)')
-# plt.plot(history.history['val_accuracy'], label='Accuracy (validation data)')
-# plt.title('Model performance for 3D Voxel Keras Conv2D (Accuracy)')
-# plt.ylabel('Accuracy value')
-# plt.xlabel('No. epoch')
-# plt.legend(['train', 'test'], loc="upper left")
-# plt.show()
+labels = ['bathtub', 'bed', 'chair', 'desk', 'dresser', 'monitor', 'night_stand', 'sofa', 'table', 'toilet']
+pred = model.predict(X_test)
+pred = np.argmax(pred, axis=1)
+
+y = np.argmax(targets_test, axis=1)
+
+report = metrics.classification_report(y, pred, target_names=labels)
+print(report)
+
+    #
+

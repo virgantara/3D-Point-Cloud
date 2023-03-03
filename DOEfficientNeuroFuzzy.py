@@ -204,24 +204,30 @@ def get_model(input_shape, nclasses=10):
 
 input_shape = VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE
 
-model = get_model(input_shape=input_shape, nclasses=NUM_CLASSES)
-# tf.keras.utils.plot_model(model,show_shapes=True)
-model.summary()
+is_training = False
 
-model.compile(optimizer=tf.keras.optimizers.RMSprop(),
-              loss='categorical_crossentropy',
-              metrics=['accuracy'])
+if is_training:
+    model = get_model(input_shape=input_shape, nclasses=NUM_CLASSES)
+    # tf.keras.utils.plot_model(model,show_shapes=True)
+    model.summary()
+
+    model.compile(optimizer=tf.keras.optimizers.Adam(),
+                  loss='categorical_crossentropy',
+                  metrics=['accuracy'])
 
 
-history = model.fit(X_train, targets_train, epochs=NUM_EPOCH, verbose=1,
-                    validation_split=0.3)
-model.save(filepath="do_neuro_fuzzy_effnet.h5")
+    history = model.fit(X_train, targets_train, epochs=NUM_EPOCH, verbose=1, validation_split=0.3)
+    hist_df = pd.DataFrame(history.history)
+    hist_csv_file = 'history_neuro_fuzzy_efficientnet_modelnet'+str(NUM_CLASSES)+'.csv'
+    with open(hist_csv_file, mode='w') as f:
+        hist_df.to_csv(f)
+
+    model.save(filepath="models/do_neuro_fuzzy_effnet.h5")
+else:
+    model = tf.keras.models.load_model("models/do_neuro_fuzzy_effnet.h5")
+
 #
-#
-# hist_df = pd.DataFrame(history.history)
-# hist_csv_file = 'history_neuro_fuzzy_efficientnet_modelnet'+str(NUM_CLASSES)+'.csv'
-# with open(hist_csv_file, mode='w') as f:
-#     hist_df.to_csv(f)
+
 #
 loss, accuracy = model.evaluate(X_test, targets_test)
 

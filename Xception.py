@@ -5,8 +5,7 @@ from tensorflow.keras.layers import BatchNormalization,MaxPool2D
 from tensorflow.keras.layers import GlobalAvgPool2D
 from tensorflow.keras import Model
 
-
-
+from sklearn import metrics
 import h5py
 from imblearn.over_sampling import SMOTE
 import numpy as np
@@ -114,8 +113,7 @@ if __name__ == "__main__":
     x = middle_flow(x)
     output = exit_flow(x, n_classes=NUM_CLASSES)
 
-    model = Model(inputs=input, outputs=output)
-    model.summary()
+
 
     oversample = SMOTE()
     with h5py.File("data_voxel_"+str(NUM_CLASSES)+".h5", "r") as hf:
@@ -132,10 +130,10 @@ if __name__ == "__main__":
         # Determine sample shape
         sample_shape = (16, 16, 16)
 
-        # X_train, targets_train = oversample.fit_resample(X_train, targets_train)
+        X_train, targets_train = oversample.fit_resample(X_train, targets_train)
         X_train = np.array(X_train)
 
-        # X_test, targets_test = oversample.fit_resample(X_test, targets_test)
+        X_test, targets_test = oversample.fit_resample(X_test, targets_test)
 
         X_train = X_train.reshape(X_train.shape[0], 16, 16, 16)
         X_test = X_test.reshape(X_test.shape[0], 16, 16, 16)
@@ -144,39 +142,57 @@ if __name__ == "__main__":
         targets_test = to_categorical(targets_test).astype(np.int32)
 
     NUM_EPOCH = 50
+    is_training = False
+    if is_training:
+        model = Model(inputs=input, outputs=output)
+        model.summary()
+        model.compile(optimizer='adam',
+                      loss='categorical_crossentropy',
+                      metrics=['accuracy'])
 
-    model.compile(optimizer='adam',
-                  loss='categorical_crossentropy',
-                  metrics=['accuracy'])
+        history = model.fit(X_train, targets_train, epochs=NUM_EPOCH, verbose=1,
+                            validation_split=0.2)
+        hist_df = pd.DataFrame(history.history)
 
-    history = model.fit(X_train, targets_train, epochs=NUM_EPOCH, verbose=1,
-                        validation_split=0.2)
+        # or save to csv:
+        hist_csv_file = 'history/history_xception_modelnet' + str(NUM_CLASSES) + '.csv'
+        with open(hist_csv_file, mode='w') as f:
+            hist_df.to_csv(f)
 
-    model.save('xception_modelnet'+str(NUM_CLASSES)+'.h5', save_format='h5')
-    hist_df = pd.DataFrame(history.history)
+        model.save('xception_modelnet'+str(NUM_CLASSES)+'.h5', save_format='h5')
 
-    # or save to csv:
-    hist_csv_file = 'history/history_xception_modelnet'+str(NUM_CLASSES)+'.csv'
-    with open(hist_csv_file, mode='w') as f:
-        hist_df.to_csv(f)
+        plt.plot(history.history['loss'], label='Categorical crossentropy (training data)')
+        plt.plot(history.history['val_loss'], label='Categorical crossentropy (validation data)')
+        plt.title('Model performance for 3D Voxel Keras Conv2D (Loss)')
+        plt.ylabel('Loss value')
+        plt.xlabel('No. epoch')
+        plt.legend(['train', 'test'], loc="upper left")
+        plt.show()
+
+        # # Plot history: Categorical Accuracy
+        plt.plot(history.history['accuracy'], label='Accuracy (training data)')
+        plt.plot(history.history['val_accuracy'], label='Accuracy (validation data)')
+        plt.title('Model performance for 3D Voxel Keras Conv2D (Accuracy)')
+        plt.ylabel('Accuracy value')
+        plt.xlabel('No. epoch')
+        plt.legend(['train', 'test'], loc="upper left")
+        plt.show()
+    else:
+        model = tf.keras.models.load_model("models/xception_modelnet10.h5")
+
+
 
     loss, accuracy = model.evaluate(X_test, targets_test)
 
     print(loss, accuracy)
 
-    plt.plot(history.history['loss'], label='Categorical crossentropy (training data)')
-    plt.plot(history.history['val_loss'], label='Categorical crossentropy (validation data)')
-    plt.title('Model performance for 3D Voxel Keras Conv2D (Loss)')
-    plt.ylabel('Loss value')
-    plt.xlabel('No. epoch')
-    plt.legend(['train', 'test'], loc="upper left")
-    plt.show()
+    labels = ['bathtub', 'bed', 'chair', 'desk', 'dresser', 'monitor', 'night_stand', 'sofa', 'table', 'toilet']
+    pred = model.predict(X_test)
+    pred = np.argmax(pred, axis=1)
 
-    # # Plot history: Categorical Accuracy
-    plt.plot(history.history['accuracy'], label='Accuracy (training data)')
-    plt.plot(history.history['val_accuracy'], label='Accuracy (validation data)')
-    plt.title('Model performance for 3D Voxel Keras Conv2D (Accuracy)')
-    plt.ylabel('Accuracy value')
-    plt.xlabel('No. epoch')
-    plt.legend(['train', 'test'], loc="upper left")
-    plt.show()
+    y = np.argmax(targets_test, axis=1)
+
+    report = metrics.classification_report(y, pred, target_names=labels)
+    print(report)
+
+

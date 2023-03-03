@@ -5,6 +5,13 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.layers import ReLU, concatenate
 import tensorflow.keras.backend as K
 
+from sklearn import metrics
+import h5py
+from imblearn.over_sampling import SMOTE
+import numpy as np
+from keras.utils import to_categorical
+import pandas as pd
+import matplotlib.pyplot as plt
 
 # Creating Densenet121
 def densenet(input_shape, n_classes, filters = 32):
@@ -48,21 +55,13 @@ def densenet(input_shape, n_classes, filters = 32):
 
 
 
-import h5py
-from imblearn.over_sampling import SMOTE
-import numpy as np
-from keras.utils import to_categorical
-import pandas as pd
-import matplotlib.pyplot as plt
-
 if __name__ == "__main__":
     input_shape = (16,16,16)
     NUM_CLASSES = 10
 
     input_shape = 16, 16, 16
 
-    model = densenet(input_shape=input_shape, n_classes=NUM_CLASSES)
-    model.summary()
+
 
     oversample = SMOTE()
     with h5py.File("data_voxel_"+str(NUM_CLASSES)+".h5", "r") as hf:
@@ -79,10 +78,10 @@ if __name__ == "__main__":
         # Determine sample shape
         sample_shape = (16, 16, 16)
 
-        # X_train, targets_train = oversample.fit_resample(X_train, targets_train)
+        X_train, targets_train = oversample.fit_resample(X_train, targets_train)
         X_train = np.array(X_train)
 
-        # X_test, targets_test = oversample.fit_resample(X_test, targets_test)
+        X_test, targets_test = oversample.fit_resample(X_test, targets_test)
 
         X_train = X_train.reshape(X_train.shape[0], 16, 16, 16)
         X_test = X_test.reshape(X_test.shape[0], 16, 16, 16)
@@ -92,24 +91,39 @@ if __name__ == "__main__":
 
     NUM_EPOCH = 50
 
-    model.compile(optimizer='adam',
-                  loss='categorical_crossentropy',
-                  metrics=['accuracy'])
+    is_training = False
+    if is_training:
+        model = densenet(input_shape=input_shape, n_classes=NUM_CLASSES)
+        model.summary()
+        model.compile(optimizer='adam',
+                      loss='categorical_crossentropy',
+                      metrics=['accuracy'])
 
-    history = model.fit(X_train, targets_train, epochs=NUM_EPOCH, verbose=1,
-                        validation_split=0.2)
+        history = model.fit(X_train, targets_train, epochs=NUM_EPOCH, verbose=1,
+                            validation_split=0.2)
 
-    model.save('densenet121_modelnet'+str(NUM_CLASSES)+'.h5', save_format='h5')
-    hist_df = pd.DataFrame(history.history)
+        model.save('densenet121_modelnet'+str(NUM_CLASSES)+'.h5', save_format='h5')
+        hist_df = pd.DataFrame(history.history)
 
-    # or save to csv:
-    hist_csv_file = 'history_densenet121_modelnet'+str(NUM_CLASSES)+'.csv'
-    with open(hist_csv_file, mode='w') as f:
-        hist_df.to_csv(f)
+        # or save to csv:
+        hist_csv_file = 'history_densenet121_modelnet'+str(NUM_CLASSES)+'.csv'
+        with open(hist_csv_file, mode='w') as f:
+            hist_df.to_csv(f)
+    else:
+        model = tf.keras.models.load_model("models/densenet121_modelnet10.h5")
 
     loss, accuracy = model.evaluate(X_test, targets_test)
 
     print(loss, accuracy)
+
+    labels = ['bathtub', 'bed', 'chair', 'desk', 'dresser', 'monitor', 'night_stand', 'sofa', 'table', 'toilet']
+    pred = model.predict(X_test)
+    pred = np.argmax(pred, axis=1)
+
+    y = np.argmax(targets_test, axis=1)
+
+    report = metrics.classification_report(y, pred, target_names=labels)
+    print(report)
 
     plt.plot(history.history['loss'], label='Categorical crossentropy (training data)')
     plt.plot(history.history['val_loss'], label='Categorical crossentropy (validation data)')
