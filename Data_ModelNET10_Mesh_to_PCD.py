@@ -4,9 +4,10 @@ import glob
 import open3d as o3d
 import trimesh
 from pathlib import Path
+import numpy as np
 
-dirname = "modelnet40_pcd"
-DATA_DIR = "/media/virgantara/DATA1/Penelitian/Datasets/ModelNet40"
+dirname = "modelnet10_pcd"
+DATA_DIR = "/media/virgantara/DATA1/Penelitian/Datasets/ModelNet10"
 SAVE_PATH = "/home/virgantara/PythonProjects/PointCloud/dataset/"+dirname
 print(DATA_DIR)
 
@@ -42,6 +43,7 @@ for i, folder in enumerate(folders):
                 fname = Path(f).stem
                 # nama_train = os.path.splitext(f.split("\\")[-1])[0]
                 xyz=trimesh.load(f).sample(2048)
+                print(np.array(xyz).shape)
                 pcd = o3d.geometry.PointCloud()
                 pcd.points = o3d.utility.Vector3dVector(xyz)
                 if not os.path.exists(SAVE_PATH):
@@ -53,9 +55,9 @@ for i, folder in enumerate(folders):
                 if not os.path.exists(SAVE_PATH + "/"+ class_map + "/train/"):
                         os.mkdir(SAVE_PATH + "/"+ class_map + "/train/")
 
-                save_path = SAVE_PATH + "/"+ class_map + "/train/"+ fname+".pcd"
-                print("Writing Train:", save_path)
-                o3d.io.write_point_cloud(save_path, pcd)
+                # save_path = SAVE_PATH + "/"+ class_map + "/train/"+ fname+".pcd"
+                # print("Writing Train:", save_path)
+                # o3d.io.write_point_cloud(save_path, pcd)
 
 
 
@@ -74,9 +76,9 @@ for i, folder in enumerate(folders):
                 if not os.path.exists(SAVE_PATH + "/" + class_map + "/test/"):
                         os.mkdir(SAVE_PATH + "/" + class_map + "/test/")
 
-                save_path =os.path.join(SAVE_PATH,class_map + "/test/"+ fname+".pcd")
-                print("Writing Test:", save_path)
-                o3d.io.write_point_cloud(save_path, pcd)
+                # save_path =os.path.join(SAVE_PATH,class_map + "/test/"+ fname+".pcd")
+                # print("Writing Test:", save_path)
+                # o3d.io.write_point_cloud(save_path, pcd)
         
 
 # print(class_map)

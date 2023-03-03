@@ -162,4 +162,4 @@ class DOConv2D(Conv2D):
         config = super(DOConv2D, self).get_config()
         config['groups'] = self.groups
         config['D_mul'] = self.D_mul
-        return
+        return config

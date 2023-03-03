@@ -30,7 +30,7 @@ n_neurons = 100
 
 # number of features feed to fuzzy Inference Layer
 n_feature = 9
-VOXEL_SIZE = 8
+VOXEL_SIZE = 16
 # based of article
 batch_size = 70
 # to get all permutaion
@@ -215,6 +215,7 @@ model.compile(optimizer=tf.keras.optimizers.RMSprop(),
 
 history = model.fit(X_train, targets_train, epochs=NUM_EPOCH, verbose=1,
                     validation_split=0.3)
+model.save(filepath="do_neuro_fuzzy_effnet.h5")
 #
 #
 # hist_df = pd.DataFrame(history.history)
