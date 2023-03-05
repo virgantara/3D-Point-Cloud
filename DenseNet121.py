@@ -12,6 +12,9 @@ import numpy as np
 from keras.utils import to_categorical
 import pandas as pd
 import matplotlib.pyplot as plt
+import os
+
+from path import Path
 
 # Creating Densenet121
 def densenet(input_shape, n_classes, filters = 32):
@@ -57,14 +60,15 @@ def densenet(input_shape, n_classes, filters = 32):
 
 if __name__ == "__main__":
     input_shape = (16,16,16)
-    NUM_CLASSES = 10
 
-    input_shape = 16, 16, 16
-
-
-
+    BASEDATA_PATH = "/media/virgantara/DATA1/Penelitian/Datasets"
+    DATA_DIR = os.path.join(BASEDATA_PATH, "ModelNet40")
+    path = Path(DATA_DIR)
+    folders = [dir for dir in sorted(os.listdir(path)) if os.path.isdir(path / dir)]
+    classes = {folder: i for i, folder in enumerate(folders)};
+    NUM_CLASSES = np.array(folders).shape[0]
     oversample = SMOTE()
-    with h5py.File("data_voxel_"+str(NUM_CLASSES)+".h5", "r") as hf:
+    with h5py.File("data_voxel_"+str(NUM_CLASSES)+"_16.h5", "r") as hf:
         X_train = hf["X_train"][:]
         X_train = np.array(X_train)
 
@@ -91,7 +95,7 @@ if __name__ == "__main__":
 
     NUM_EPOCH = 50
 
-    is_training = False
+    is_training = True
     if is_training:
         model = densenet(input_shape=input_shape, n_classes=NUM_CLASSES)
         model.summary()
@@ -109,6 +113,23 @@ if __name__ == "__main__":
         hist_csv_file = 'history_densenet121_modelnet'+str(NUM_CLASSES)+'.csv'
         with open(hist_csv_file, mode='w') as f:
             hist_df.to_csv(f)
+
+        plt.plot(history.history['loss'], label='Categorical crossentropy (training data)')
+        plt.plot(history.history['val_loss'], label='Categorical crossentropy (validation data)')
+        plt.title('Model performance for 3D Voxel Keras Conv2D (Loss)')
+        plt.ylabel('Loss value')
+        plt.xlabel('No. epoch')
+        plt.legend(['train', 'test'], loc="upper left")
+        plt.show()
+
+        # # Plot history: Categorical Accuracy
+        plt.plot(history.history['accuracy'], label='Accuracy (training data)')
+        plt.plot(history.history['val_accuracy'], label='Accuracy (validation data)')
+        plt.title('Model performance for 3D Voxel Keras Conv2D (Accuracy)')
+        plt.ylabel('Accuracy value')
+        plt.xlabel('No. epoch')
+        plt.legend(['train', 'test'], loc="upper left")
+        plt.show()
     else:
         model = tf.keras.models.load_model("models/densenet121_modelnet10.h5")
 
@@ -116,7 +137,7 @@ if __name__ == "__main__":
 
     print(loss, accuracy)
 
-    labels = ['bathtub', 'bed', 'chair', 'desk', 'dresser', 'monitor', 'night_stand', 'sofa', 'table', 'toilet']
+    labels = folders
     pred = model.predict(X_test)
     pred = np.argmax(pred, axis=1)
 
@@ -125,19 +146,4 @@ if __name__ == "__main__":
     report = metrics.classification_report(y, pred, target_names=labels)
     print(report)
 
-    plt.plot(history.history['loss'], label='Categorical crossentropy (training data)')
-    plt.plot(history.history['val_loss'], label='Categorical crossentropy (validation data)')
-    plt.title('Model performance for 3D Voxel Keras Conv2D (Loss)')
-    plt.ylabel('Loss value')
-    plt.xlabel('No. epoch')
-    plt.legend(['train', 'test'], loc="upper left")
-    plt.show()
 
-    # # Plot history: Categorical Accuracy
-    plt.plot(history.history['accuracy'], label='Accuracy (training data)')
-    plt.plot(history.history['val_accuracy'], label='Accuracy (validation data)')
-    plt.title('Model performance for 3D Voxel Keras Conv2D (Accuracy)')
-    plt.ylabel('Accuracy value')
-    plt.xlabel('No. epoch')
-    plt.legend(['train', 'test'], loc="upper left")
-    plt.show()

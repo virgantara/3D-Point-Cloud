@@ -23,6 +23,7 @@ import gc
 import os
 import scipy
 import random
+from path import Path
 
 
 # number of neurons as number of Rule will be produce
@@ -69,7 +70,13 @@ class fuzzy_inference_block(tf.keras.layers.Layer):
                            axis=-2, keepdims=False))
         return phi
 
-NUM_CLASSES = 10
+BASEDATA_PATH = "/media/virgantara/DATA1/Penelitian/Datasets"
+DATA_DIR = os.path.join(BASEDATA_PATH, "ModelNet40")
+path = Path(DATA_DIR)
+folders = [dir for dir in sorted(os.listdir(path)) if os.path.isdir(path/dir)]
+classes = {folder: i for i, folder in enumerate(folders)};
+
+NUM_CLASSES = np.array(folders).shape[0]
 oversample = SMOTE()
 with h5py.File("data_voxel_"+str(NUM_CLASSES)+"_"+str(VOXEL_SIZE)+".h5", "r") as hf:
     X_train = hf["X_train"][:]
@@ -195,44 +202,50 @@ def EffNet(input_shape, num_classes, plot_model=False):
     return model
 
 
-def get_model(input_shape, nclasses=10):
-    model = EffNet(input_shape, num_classes=nclasses)
-    return model
-
 # input_shape = (16,16,16)
 
 
 input_shape = VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE
 
-is_training = False
+def get_model(input_shape, nclasses=10,is_training=False):
+    if is_training:
+        model = EffNet(input_shape, num_classes=nclasses)
 
-if is_training:
-    model = get_model(input_shape=input_shape, nclasses=NUM_CLASSES)
-    # tf.keras.utils.plot_model(model,show_shapes=True)
-    model.summary()
+        # tf.keras.utils.plot_model(model,show_shapes=True)
+        model.summary()
 
-    model.compile(optimizer=tf.keras.optimizers.Adam(),
-                  loss='categorical_crossentropy',
-                  metrics=['accuracy'])
+        model.compile(optimizer=tf.keras.optimizers.Adam(),
+                      loss='categorical_crossentropy',
+                      metrics=['accuracy'])
 
 
-    history = model.fit(X_train, targets_train, epochs=NUM_EPOCH, verbose=1, validation_split=0.3)
-    hist_df = pd.DataFrame(history.history)
-    hist_csv_file = 'history_neuro_fuzzy_efficientnet_modelnet'+str(NUM_CLASSES)+'.csv'
-    with open(hist_csv_file, mode='w') as f:
-        hist_df.to_csv(f)
+        history = model.fit(X_train, targets_train, epochs=NUM_EPOCH, verbose=1, validation_split=0.3)
+        hist_df = pd.DataFrame(history.history)
+        hist_csv_file = 'history_neuro_fuzzy_efficientnet_modelnet'+str(NUM_CLASSES)+'.csv'
+        with open(hist_csv_file, mode='w') as f:
+            hist_df.to_csv(f)
 
-    model.save(filepath="models/do_neuro_fuzzy_effnet.h5")
-else:
-    model = tf.keras.models.load_model("models/do_neuro_fuzzy_effnet.h5")
+        model.save_weights(filepath="weights/weight_do_neuro_fuzzy_effnet"+str(NUM_CLASSES)+".h5")
+    else:
+        model = tf.keras.models.load_model("models/do_neuro_fuzzy_effnet"+str(NUM_CLASSES)+".h5")
 
+    return model
 #
-
+model = get_model(input_shape, NUM_CLASSES, is_training=True)
 #
 loss, accuracy = model.evaluate(X_test, targets_test)
 
 print(loss, accuracy)
-#
+
+from sklearn import metrics
+labels = folders
+pred = model.predict(X_test)
+pred = np.argmax(pred, axis=1)
+
+y = np.argmax(targets_test, axis=1)
+
+report = metrics.classification_report(y, pred,target_names=labels)
+print(report)
 # plt.plot(history.history['loss'], label='Categorical crossentropy (training data)')
 # plt.plot(history.history['val_loss'], label='Categorical crossentropy (validation data)')
 # plt.title('Model performance for 3D Voxel Keras Conv2D (Loss)')
