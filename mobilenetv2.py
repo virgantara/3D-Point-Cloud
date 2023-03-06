@@ -13,8 +13,10 @@ import numpy as np
 from keras.utils import to_categorical
 import pandas as pd
 import matplotlib.pyplot as plt
-
+import os
+from path import Path
 from sklearn import metrics
+from sklearn.model_selection import train_test_split
 # Define ReLU6 activation
 relu6 = tf.keras.layers.ReLU(6.)
 
@@ -136,38 +138,46 @@ def MobileNetV2(input_shape, k, plot_model=False):
 
     return model
 
-if __name__ == "__main__":
-    input_shape = (16,16,16)
-    NUM_CLASSES = 10
 
+def read_voxel_our(voxelsize=16):
+    with h5py.File("data_voxel_45deg_merged_"+ str(voxelsize) + ".h5", "r") as hf:
+        X = hf["data_points"][:]
+        X = np.array(X)
+
+        y = hf["data_labels"][:]
+        X, y = oversample.fit_resample(X, y)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.33, random_state = 42)
+
+        X_train = np.array(X_train)
+
+        X_train = X_train.reshape(X_train.shape[0], voxelsize, voxelsize, voxelsize)
+        X_test = X_test.reshape(X_test.shape[0], voxelsize, voxelsize, voxelsize)
+
+        y_train = to_categorical(y_train).astype(np.int32)
+        y_test = to_categorical(y_test).astype(np.int32)
+
+    return X_train, X_test, y_train, y_test
+
+
+if __name__ == "__main__":
+    VOXEL_SIZE = 16
+    input_shape = (VOXEL_SIZE,VOXEL_SIZE,VOXEL_SIZE)
+
+    BASEDATA_PATH = "/media/virgantara/DATA1/Penelitian/Datasets"
+
+    # DATA_DIR = os.path.join(BASEDATA_PATH, "")
+    DATA_DIR = "dataset/45Deg_merged"
+    path = Path(DATA_DIR)
+    folders = [dir for dir in sorted(os.listdir(path)) if os.path.isdir(path / dir)]
+    classes = {folder: i for i, folder in enumerate(folders)};
+
+    NUM_CLASSES = np.array(folders).shape[0]
 
     oversample = SMOTE()
-    with h5py.File("data_voxel_"+str(NUM_CLASSES)+".h5", "r") as hf:
-        X_train = hf["X_train"][:]
-        X_train = np.array(X_train)
 
-        targets_train = hf["y_train"][:]
+    X_train, X_test, targets_train, targets_test = read_voxel_our(voxelsize=VOXEL_SIZE)
 
-        X_test = hf["X_test"][:]
-        X_test = np.array(X_test)
-
-        targets_test = hf["y_test"][:]
-        test_y = targets_test
-        # Determine sample shape
-        sample_shape = (16, 16, 16)
-
-        X_train, targets_train = oversample.fit_resample(X_train, targets_train)
-        X_train = np.array(X_train)
-
-        X_test, targets_test = oversample.fit_resample(X_test, targets_test)
-
-        X_train = X_train.reshape(X_train.shape[0], 16, 16, 16)
-        X_test = X_test.reshape(X_test.shape[0], 16, 16, 16)
-
-        targets_train = to_categorical(targets_train).astype(np.int32)
-        targets_test = to_categorical(targets_test).astype(np.int32)
-
-    NUM_EPOCH = 50
+    NUM_EPOCH = 20
     is_training = True
     if is_training:
         model = MobileNetV2(input_shape=input_shape, k=NUM_CLASSES)
@@ -178,11 +188,11 @@ if __name__ == "__main__":
         history = model.fit(X_train, targets_train, epochs=NUM_EPOCH, verbose=1,
                             validation_split=0.2)
 
-        model.save('models/mobilenetv2_modelnet'+str(NUM_CLASSES)+'.h5', save_format='h5')
+        model.save('models/mobilenetv2_our_pose'+str(NUM_CLASSES)+'.h5', save_format='h5')
         hist_df = pd.DataFrame(history.history)
 
         # or save to csv:
-        hist_csv_file = 'history/history_mobilenetv2_modelnet'+str(NUM_CLASSES)+'.csv'
+        hist_csv_file = 'history/history_mobilenetv2_our_pose'+str(NUM_CLASSES)+'.csv'
         with open(hist_csv_file, mode='w') as f:
             hist_df.to_csv(f)
 
@@ -209,7 +219,7 @@ if __name__ == "__main__":
 
     print(loss, accuracy)
 
-    labels = ['bathtub', 'bed', 'chair', 'desk', 'dresser', 'monitor', 'night_stand', 'sofa', 'table', 'toilet']
+    labels = folders
     pred = model.predict(X_test)
     pred = np.argmax(pred, axis=1)
 

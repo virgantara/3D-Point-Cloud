@@ -11,6 +11,7 @@ from keras.utils import to_categorical
 import pandas as pd
 import matplotlib.pyplot as plt
 import tensorflow as tf
+from path import Path
 
 def get_model(input_shape=(16, 16, 3), n_classes=10):
     model = Sequential()
@@ -45,13 +46,18 @@ def get_model(input_shape=(16, 16, 3), n_classes=10):
 
 if __name__ == "__main__":
     # model code
-    NUM_CLASSES = 10
+    BASEDATA_PATH = "/media/virgantara/DATA1/Penelitian/Datasets"
+    DATA_DIR = os.path.join(BASEDATA_PATH, "ModelNet40")
+    path = Path(DATA_DIR)
+    folders = [dir for dir in sorted(os.listdir(path)) if os.path.isdir(path / dir)]
+    classes = {folder: i for i, folder in enumerate(folders)};
+    NUM_CLASSES = np.array(folders).shape[0]
 
     input_shape = (16,16,16)
 
 
     oversample = SMOTE()
-    with h5py.File("data_voxel_"+str(NUM_CLASSES)+".h5", "r") as hf:
+    with h5py.File("data_voxel_"+str(NUM_CLASSES)+"_16.h5", "r") as hf:
         X_train = hf["X_train"][:]
         X_train = np.array(X_train)
 
@@ -96,29 +102,29 @@ if __name__ == "__main__":
         with open(hist_csv_file, mode='w') as f:
             hist_df.to_csv(f)
 
-        plt.plot(history.history['loss'], label='Categorical crossentropy (training data)')
-        plt.plot(history.history['val_loss'], label='Categorical crossentropy (validation data)')
-        plt.title('Model performance for 3D Voxel Keras Conv2D (Loss)')
-        plt.ylabel('Loss value')
-        plt.xlabel('No. epoch')
-        plt.legend(['train', 'test'], loc="upper left")
-        plt.show()
-
-        # # Plot history: Categorical Accuracy
-        plt.plot(history.history['accuracy'], label='Accuracy (training data)')
-        plt.plot(history.history['val_accuracy'], label='Accuracy (validation data)')
-        plt.title('Model performance for 3D Voxel Keras Conv2D (Accuracy)')
-        plt.ylabel('Accuracy value')
-        plt.xlabel('No. epoch')
-        plt.legend(['train', 'test'], loc="upper left")
-        plt.show()
+        # plt.plot(history.history['loss'], label='Categorical crossentropy (training data)')
+        # plt.plot(history.history['val_loss'], label='Categorical crossentropy (validation data)')
+        # plt.title('Model performance for 3D Voxel Keras Conv2D (Loss)')
+        # plt.ylabel('Loss value')
+        # plt.xlabel('No. epoch')
+        # plt.legend(['train', 'test'], loc="upper left")
+        # plt.show()
+        #
+        # # # Plot history: Categorical Accuracy
+        # plt.plot(history.history['accuracy'], label='Accuracy (training data)')
+        # plt.plot(history.history['val_accuracy'], label='Accuracy (validation data)')
+        # plt.title('Model performance for 3D Voxel Keras Conv2D (Accuracy)')
+        # plt.ylabel('Accuracy value')
+        # plt.xlabel('No. epoch')
+        # plt.legend(['train', 'test'], loc="upper left")
+        # plt.show()
     else:
         model = tf.keras.models.load_model("models/vgg16_modelnet"+str(NUM_CLASSES)+".h5")
 
     loss, accuracy = model.evaluate(X_test, targets_test)
 
     print(loss, accuracy)
-    labels = ['bathtub', 'bed', 'chair', 'desk', 'dresser', 'monitor', 'night_stand', 'sofa', 'table', 'toilet']
+    labels = folders
     pred = model.predict(X_test)
     pred = np.argmax(pred, axis=1)
 

@@ -9,12 +9,12 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 import glob
 import os, sys
 
-np.set_printoptions(threshold=sys.maxsize)
+# np.set_printoptions(threshold=sys.maxsize)
 from VoxelGrid import VoxelGrid
 
 from pathlib import Path
 
-VOXEL_SIZE = 20
+VOXEL_SIZE = 16
 
 def normalize_pc_range(pcd_np):
     scaler = MinMaxScaler()
@@ -56,6 +56,24 @@ def pcd_to_voxel(path):
     voxel_final = voxel_2d.astype('float64')
     return voxel_final
 
+def pcd_to_voxelv2(path):
+    voxel_2d = []
+    # LOAD PCD
+    pcd = o3d.io.read_point_cloud(path)
+    R = pcd.get_rotation_matrix_from_axis_angle([0, 0, 1.571])
+    pcd = pcd.rotate(R, center=(0, 0, 0))
+    R = pcd.get_rotation_matrix_from_axis_angle([-1.571, 0, 0])
+    pcd = pcd.rotate(R, center=(0, 0, 0))
+    pcd_np = np.asarray(pcd.points)
+
+    # pcd_np = np.array(normalize_pc_range(pcd_np))
+    # VOXELIZATION
+    voxel_grid = VoxelGrid(pcd_np, x_y_z=[VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE])
+    voxel_2d = np.array(voxel_grid.vector[:, :, :])
+    voxel_2d = voxel_2d.reshape(-1)
+    # voxel_2d = np.where(voxel_2d > 0.0, 1, 0)
+    voxel_final = voxel_2d.astype('float64')
+    return voxel_final
 
 def generate_hdf5(DIR, filename):
     # def generate_hdf5(DIR):
@@ -116,12 +134,46 @@ def array_to_color(array, cmap="Oranges"):
     s_m = plt.cm.ScalarMappable(cmap=cmap)
     return s_m.to_rgba(array)[:, :-1]
 
+def generate_hdf5v2(DIR, filename):
+    # def generate_hdf5(DIR):
+    folders = sorted(glob.glob(os.path.join(DIR, "*")))
+
+    with h5py.File(filename, 'w') as f:
+
+        data_points = []
+        data_labels = []
+        # class_map = {}
+
+        # print(folders)
+
+        for i, folder in enumerate(folders):
+            print("processing class: {}".format(os.path.basename(folder)))
+            # store folder name with ID so we can retrieve later
+            # class_map[i] = folder.split("/")[-1]
+            # class_map[i] = folder.split("\\")[-1]
+            fname = Path(folder).stem
+            # gather all files
+            # dataku = glob.glob(os.path.join(folder, "train/*"))
+
+            print("Idx", i, fname)
+            subfolders = sorted(glob.glob(os.path.join(folder, "*.pcd")))
+            for fdata in subfolders:
+                vx = pcd_to_voxel(fdata)
+                data_points.append(vx)
+                data_labels.append(i)
+
+
+        f.create_dataset("data_points", data=np.asarray(data_points))
+        f.create_dataset("data_labels", data=np.asarray(data_labels))
+
+        print("Done!")
 
 #
-DATA_DIR = "dataset/modelnet10_pcd"
+DATA_DIR = "dataset/45Deg_merged"
+generate_hdf5v2(DATA_DIR, "data_voxel_45deg_merged_"+str(VOXEL_SIZE)+".h5")
 #
 #
-generate_hdf5(DATA_DIR, "data_voxel_10_"+str(VOXEL_SIZE)+".h5")
+# generate_hdf5(DATA_DIR, "data_voxel_10_"+str(VOXEL_SIZE)+".h5")
 # X_train, y_train, X_test, y_test= read_hdf5("data_voxel_10_8.h5")
 #
 # #
