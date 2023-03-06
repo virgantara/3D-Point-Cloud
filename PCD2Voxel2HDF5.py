@@ -15,6 +15,9 @@ from VoxelGrid import VoxelGrid
 from pathlib import Path
 
 VOXEL_SIZE = 16
+VOXEL_X = 16
+VOXEL_Y = 16
+VOXEL_Z = 16
 
 def normalize_pc_range(pcd_np):
     scaler = MinMaxScaler()
@@ -68,7 +71,8 @@ def pcd_to_voxelv2(path):
 
     # pcd_np = np.array(normalize_pc_range(pcd_np))
     # VOXELIZATION
-    voxel_grid = VoxelGrid(pcd_np, x_y_z=[VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE])
+    # voxel_grid = VoxelGrid(pcd_np, x_y_z=[VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE])
+    voxel_grid = VoxelGrid(pcd_np, x_y_z=[VOXEL_X, VOXEL_Y, VOXEL_Z])
     voxel_2d = np.array(voxel_grid.vector[:, :, :])
     voxel_2d = voxel_2d.reshape(-1)
     # voxel_2d = np.where(voxel_2d > 0.0, 1, 0)
@@ -158,7 +162,7 @@ def generate_hdf5v2(DIR, filename):
             print("Idx", i, fname)
             subfolders = sorted(glob.glob(os.path.join(folder, "*.pcd")))
             for fdata in subfolders:
-                vx = pcd_to_voxel(fdata)
+                vx = pcd_to_voxelv2(fdata)
                 data_points.append(vx)
                 data_labels.append(i)
 
@@ -169,8 +173,8 @@ def generate_hdf5v2(DIR, filename):
         print("Done!")
 
 #
-DATA_DIR = "dataset/45Deg_merged"
-generate_hdf5v2(DATA_DIR, "data_voxel_45deg_merged_"+str(VOXEL_SIZE)+".h5")
+DATA_DIR = "/home/virgantara/PythonProjects/LiDAROuster/20230301/PCD_Cropped/merged_half"
+generate_hdf5v2(DATA_DIR, "data_voxel_45deg_merged_half_"+str(VOXEL_X)+"_"+str(VOXEL_Y)+"_"+str(VOXEL_Z)+".h5")
 #
 #
 # generate_hdf5(DATA_DIR, "data_voxel_10_"+str(VOXEL_SIZE)+".h5")

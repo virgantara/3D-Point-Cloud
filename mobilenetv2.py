@@ -140,7 +140,7 @@ def MobileNetV2(input_shape, k, plot_model=False):
 
 
 def read_voxel_our(voxelsize=16):
-    with h5py.File("data_voxel_45deg_merged_"+ str(voxelsize) + ".h5", "r") as hf:
+    with h5py.File("data_voxel_45deg_merged_half_16_16_16.h5", "r") as hf:
         X = hf["data_points"][:]
         X = np.array(X)
 
@@ -149,9 +149,9 @@ def read_voxel_our(voxelsize=16):
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.33, random_state = 42)
 
         X_train = np.array(X_train)
-
-        X_train = X_train.reshape(X_train.shape[0], voxelsize, voxelsize, voxelsize)
-        X_test = X_test.reshape(X_test.shape[0], voxelsize, voxelsize, voxelsize)
+        voxel_x, voxel_y, voxel_z = VOXEL_X, VOXEL_Y,VOXEL_Z
+        X_train = X_train.reshape(X_train.shape[0], voxel_x, voxel_y, voxel_z)
+        X_test = X_test.reshape(X_test.shape[0], voxel_x, voxel_y, voxel_z)
 
         y_train = to_categorical(y_train).astype(np.int32)
         y_test = to_categorical(y_test).astype(np.int32)
@@ -161,7 +161,10 @@ def read_voxel_our(voxelsize=16):
 
 if __name__ == "__main__":
     VOXEL_SIZE = 16
-    input_shape = (VOXEL_SIZE,VOXEL_SIZE,VOXEL_SIZE)
+    VOXEL_X = 16
+    VOXEL_Y = 16
+    VOXEL_Z = 16
+    input_shape = (VOXEL_X,VOXEL_Y,VOXEL_Z)
 
     BASEDATA_PATH = "/media/virgantara/DATA1/Penelitian/Datasets"
 
@@ -177,7 +180,7 @@ if __name__ == "__main__":
 
     X_train, X_test, targets_train, targets_test = read_voxel_our(voxelsize=VOXEL_SIZE)
 
-    NUM_EPOCH = 20
+    NUM_EPOCH = 200
     is_training = True
     if is_training:
         model = MobileNetV2(input_shape=input_shape, k=NUM_CLASSES)
@@ -188,32 +191,32 @@ if __name__ == "__main__":
         history = model.fit(X_train, targets_train, epochs=NUM_EPOCH, verbose=1,
                             validation_split=0.2)
 
-        model.save('models/mobilenetv2_our_pose'+str(NUM_CLASSES)+'.h5', save_format='h5')
+        # model.save('models/mobilenetv2_our_pose'+str(NUM_CLASSES)+'.h5', save_format='h5')
         hist_df = pd.DataFrame(history.history)
 
         # or save to csv:
-        hist_csv_file = 'history/history_mobilenetv2_our_pose'+str(NUM_CLASSES)+'.csv'
-        with open(hist_csv_file, mode='w') as f:
-            hist_df.to_csv(f)
+        # hist_csv_file = 'history/history_mobilenetv2_our_pose'+str(NUM_CLASSES)+'.csv'
+        # with open(hist_csv_file, mode='w') as f:
+        #     hist_df.to_csv(f)
 
-        # plt.plot(history.history['loss'], label='Categorical crossentropy (training data)')
-        # plt.plot(history.history['val_loss'], label='Categorical crossentropy (validation data)')
-        # plt.title('Model performance for 3D Voxel Keras Conv2D (Loss)')
-        # plt.ylabel('Loss value')
-        # plt.xlabel('No. epoch')
-        # plt.legend(['train', 'test'], loc="upper left")
-        # plt.show()
-        #
-        # # # Plot history: Categorical Accuracy
-        # plt.plot(history.history['accuracy'], label='Accuracy (training data)')
-        # plt.plot(history.history['val_accuracy'], label='Accuracy (validation data)')
-        # plt.title('Model performance for 3D Voxel Keras Conv2D (Accuracy)')
-        # plt.ylabel('Accuracy value')
-        # plt.xlabel('No. epoch')
-        # plt.legend(['train', 'test'], loc="upper left")
-        # plt.show()
+        plt.plot(history.history['loss'], label='Categorical crossentropy (training data)')
+        plt.plot(history.history['val_loss'], label='Categorical crossentropy (validation data)')
+        plt.title('Model performance for 3D Voxel Keras Conv2D (Loss)')
+        plt.ylabel('Loss value')
+        plt.xlabel('No. epoch')
+        plt.legend(['train', 'test'], loc="upper left")
+        plt.show()
+
+        # # Plot history: Categorical Accuracy
+        plt.plot(history.history['accuracy'], label='Accuracy (training data)')
+        plt.plot(history.history['val_accuracy'], label='Accuracy (validation data)')
+        plt.title('Model performance for 3D Voxel Keras Conv2D (Accuracy)')
+        plt.ylabel('Accuracy value')
+        plt.xlabel('No. epoch')
+        plt.legend(['train', 'test'], loc="upper left")
+        plt.show()
     else:
-        model = tf.keras.models.load_model("models/mobilenetv2_modelnet" + str(NUM_CLASSES) + ".h5")
+        model = tf.keras.models.load_model("models/mobilenetv2_our_pose" + str(NUM_CLASSES) + ".h5")
 
     loss, accuracy = model.evaluate(X_test, targets_test)
 

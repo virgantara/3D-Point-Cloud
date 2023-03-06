@@ -111,7 +111,7 @@ def read_voxel_modelnet(nclasses=10, voxelsize=16):
 
 
 def read_voxel_our(voxelsize=16):
-    with h5py.File("data_voxel_45deg_merged_"+ str(voxelsize) + ".h5", "r") as hf:
+    with h5py.File("data_voxel_45deg_merged_half_16_16_16.h5", "r") as hf:
         X = hf["data_points"][:]
         X = np.array(X)
 
@@ -129,7 +129,7 @@ def read_voxel_our(voxelsize=16):
 
     return X_train, X_test, y_train, y_test
 
-NUM_EPOCH = 20
+NUM_EPOCH = 200
 
 # X_train, X_test, targets_train, targets_test = read_voxel_modelnet(nclasses=NUM_CLASSES, voxelsize=VOXEL_SIZE)
 X_train, X_test, targets_train, targets_test = read_voxel_our(voxelsize=VOXEL_SIZE)
@@ -246,10 +246,26 @@ def get_model(input_shape, nclasses=10,is_training=False):
 
 
         history = model.fit(X_train, targets_train, epochs=NUM_EPOCH, verbose=1, validation_split=0.3)
-        hist_df = pd.DataFrame(history.history)
-        hist_csv_file = 'history_neuro_fuzzy_efficientnet_ourpose'+str(NUM_CLASSES)+'.csv'
-        with open(hist_csv_file, mode='w') as f:
-            hist_df.to_csv(f)
+        # hist_df = pd.DataFrame(history.history)
+        # hist_csv_file = 'history_neuro_fuzzy_efficientnet_ourpose'+str(NUM_CLASSES)+'.csv'
+        # with open(hist_csv_file, mode='w') as f:
+        #     hist_df.to_csv(f)
+        plt.plot(history.history['loss'], label='Categorical crossentropy (training data)')
+        plt.plot(history.history['val_loss'], label='Categorical crossentropy (validation data)')
+        plt.title('Model performance for 3D Voxel Keras Conv2D (Loss)')
+        plt.ylabel('Loss value')
+        plt.xlabel('No. epoch')
+        plt.legend(['train', 'test'], loc="upper left")
+        plt.show()
+
+        # # Plot history: Categorical Accuracy
+        plt.plot(history.history['accuracy'], label='Accuracy (training data)')
+        plt.plot(history.history['val_accuracy'], label='Accuracy (validation data)')
+        plt.title('Model performance for 3D Voxel Keras Conv2D (Accuracy)')
+        plt.ylabel('Accuracy value')
+        plt.xlabel('No. epoch')
+        plt.legend(['train', 'test'], loc="upper left")
+        plt.show()
 
         model.save_weights(filepath="weights/weight_do_neuro_fuzzy_effnet_pose"+str(NUM_CLASSES)+".h5")
     else:
@@ -272,19 +288,3 @@ y_test = np.argmax(targets_test, axis=1)
 #
 report = metrics.classification_report(y_test, y_pred,target_names=labels)
 print(report)
-# plt.plot(history.history['loss'], label='Categorical crossentropy (training data)')
-# plt.plot(history.history['val_loss'], label='Categorical crossentropy (validation data)')
-# plt.title('Model performance for 3D Voxel Keras Conv2D (Loss)')
-# plt.ylabel('Loss value')
-# plt.xlabel('No. epoch')
-# plt.legend(['train', 'test'], loc="upper left")
-# plt.show()
-#
-# # # Plot history: Categorical Accuracy
-# plt.plot(history.history['accuracy'], label='Accuracy (training data)')
-# plt.plot(history.history['val_accuracy'], label='Accuracy (validation data)')
-# plt.title('Model performance for 3D Voxel Keras Conv2D (Accuracy)')
-# plt.ylabel('Accuracy value')
-# plt.xlabel('No. epoch')
-# plt.legend(['train', 'test'], loc="upper left")
-# plt.show()
