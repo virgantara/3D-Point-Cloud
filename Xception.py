@@ -12,7 +12,9 @@ import numpy as np
 from keras.utils import to_categorical
 import pandas as pd
 import matplotlib.pyplot as plt
-
+from utils import *
+from path import Path
+import os
 def conv_bn(x, filters, kernel_size, strides=1):
     x = Conv2D(filters=filters,
                kernel_size=kernel_size,
@@ -107,43 +109,54 @@ def exit_flow(tensor, n_classes=1000):
 
 if __name__ == "__main__":
     # model code
-    NUM_CLASSES = 10
-    input = Input(shape=(16, 16, 16))
-    x = entry_flow(input)
-    x = middle_flow(x)
-    output = exit_flow(x, n_classes=NUM_CLASSES)
 
 
+    # oversample = SMOTE()
+    # with h5py.File("data_voxel_"+str(NUM_CLASSES)+".h5", "r") as hf:
+    #     X_train = hf["X_train"][:]
+    #     X_train = np.array(X_train)
+    #
+    #     targets_train = hf["y_train"][:]
+    #
+    #     X_test = hf["X_test"][:]
+    #     X_test = np.array(X_test)
+    #
+    #     targets_test = hf["y_test"][:]
+    #     test_y = targets_test
+    #     # Determine sample shape
+    #     sample_shape = (16, 16, 16)
+    #
+    #     X_train, targets_train = oversample.fit_resample(X_train, targets_train)
+    #     X_train = np.array(X_train)
+    #
+    #     X_test, targets_test = oversample.fit_resample(X_test, targets_test)
+    #
+    #     X_train = X_train.reshape(X_train.shape[0], 16, 16, 16)
+    #     X_test = X_test.reshape(X_test.shape[0], 16, 16, 16)
+    #
+    #     targets_train = to_categorical(targets_train).astype(np.int32)
+    #     targets_test = to_categorical(targets_test).astype(np.int32)
 
-    oversample = SMOTE()
-    with h5py.File("data_voxel_"+str(NUM_CLASSES)+".h5", "r") as hf:
-        X_train = hf["X_train"][:]
-        X_train = np.array(X_train)
+    BASEDATA_PATH = "/media/virgantara/DATA1/Penelitian/Datasets"
+    DATA_DIR = "dataset/45Deg_merged"
+    # DATA_DIR = os.path.join(BASEDATA_PATH, "ModelNet40")
+    path = Path(DATA_DIR)
+    folders = [dir for dir in sorted(os.listdir(path)) if os.path.isdir(path / dir)]
+    classes = {folder: i for i, folder in enumerate(folders)};
+    NUM_CLASSES = np.array(folders).shape[0]
+    NUM_EPOCH = 200
+    # oversample = SMOTE()
+    VOXEL_X = 16
+    VOXEL_Y = 16
+    VOXEL_Z = 16
 
-        targets_train = hf["y_train"][:]
-
-        X_test = hf["X_test"][:]
-        X_test = np.array(X_test)
-
-        targets_test = hf["y_test"][:]
-        test_y = targets_test
-        # Determine sample shape
-        sample_shape = (16, 16, 16)
-
-        X_train, targets_train = oversample.fit_resample(X_train, targets_train)
-        X_train = np.array(X_train)
-
-        X_test, targets_test = oversample.fit_resample(X_test, targets_test)
-
-        X_train = X_train.reshape(X_train.shape[0], 16, 16, 16)
-        X_test = X_test.reshape(X_test.shape[0], 16, 16, 16)
-
-        targets_train = to_categorical(targets_train).astype(np.int32)
-        targets_test = to_categorical(targets_test).astype(np.int32)
-
-    NUM_EPOCH = 50
-    is_training = False
+    X_train, X_test, targets_train, targets_test = read_voxel_our(vx=VOXEL_X, vy=VOXEL_Y, vz=VOXEL_Z)
+    is_training = True
     if is_training:
+        input = Input(shape=(16, 16, 16))
+        x = entry_flow(input)
+        x = middle_flow(x)
+        output = exit_flow(x, n_classes=NUM_CLASSES)
         model = Model(inputs=input, outputs=output)
         model.summary()
         model.compile(optimizer='adam',
@@ -155,11 +168,11 @@ if __name__ == "__main__":
         hist_df = pd.DataFrame(history.history)
 
         # or save to csv:
-        hist_csv_file = 'history/history_xception_modelnet' + str(NUM_CLASSES) + '.csv'
+        hist_csv_file = 'history/history_xception_our_pose' + str(NUM_CLASSES) + '.csv'
         with open(hist_csv_file, mode='w') as f:
             hist_df.to_csv(f)
 
-        model.save('xception_modelnet'+str(NUM_CLASSES)+'.h5', save_format='h5')
+        model.save('xception_our_pose'+str(NUM_CLASSES)+'.h5', save_format='h5')
 
         plt.plot(history.history['loss'], label='Categorical crossentropy (training data)')
         plt.plot(history.history['val_loss'], label='Categorical crossentropy (validation data)')
@@ -178,7 +191,7 @@ if __name__ == "__main__":
         plt.legend(['train', 'test'], loc="upper left")
         plt.show()
     else:
-        model = tf.keras.models.load_model("models/xception_modelnet10.h5")
+        model = tf.keras.models.load_model("models/xception_our_pose.h5")
 
 
 
@@ -186,7 +199,7 @@ if __name__ == "__main__":
 
     print(loss, accuracy)
 
-    labels = ['bathtub', 'bed', 'chair', 'desk', 'dresser', 'monitor', 'night_stand', 'sofa', 'table', 'toilet']
+    labels = folders
     pred = model.predict(X_test)
     pred = np.argmax(pred, axis=1)
 

@@ -24,39 +24,40 @@ import os
 import scipy
 import random
 from sklearn import metrics
+from utils import *
+from path import Path
+import os
+from sklearn.model_selection import train_test_split
 
 VOXEL_SIZE = 16
 
 
-NUM_CLASSES = 10
-oversample = SMOTE()
-with h5py.File("data_voxel_"+str(NUM_CLASSES)+"_"+str(VOXEL_SIZE)+".h5", "r") as hf:
-    X_train = hf["X_train"][:]
-    X_train = np.array(X_train)
-
-    targets_train = hf["y_train"][:]
-
-    X_test = hf["X_test"][:]
-    X_test = np.array(X_test)
-
-    targets_test = hf["y_test"][:]
-    test_y = targets_test
-    # Determine sample shape
-    sample_shape = (VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE)
-
-    X_train, targets_train = oversample.fit_resample(X_train, targets_train)
-    X_train = np.array(X_train)
-
-    X_test, targets_test = oversample.fit_resample(X_test, targets_test)
-
-    X_train = X_train.reshape(X_train.shape[0], VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE)
-    X_test = X_test.reshape(X_test.shape[0], VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE)
-
-    targets_train = to_categorical(targets_train).astype(np.int32)
-    targets_test = to_categorical(targets_test).astype(np.int32)
-
-NUM_EPOCH = 50
-
+# NUM_CLASSES = 10
+# oversample = SMOTE()
+# with h5py.File("data_voxel_"+str(NUM_CLASSES)+"_"+str(VOXEL_SIZE)+".h5", "r") as hf:
+#     X_train = hf["X_train"][:]
+#     X_train = np.array(X_train)
+#
+#     targets_train = hf["y_train"][:]
+#
+#     X_test = hf["X_test"][:]
+#     X_test = np.array(X_test)
+#
+#     targets_test = hf["y_test"][:]
+#     test_y = targets_test
+#     # Determine sample shape
+#     sample_shape = (VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE)
+#
+#     X_train, targets_train = oversample.fit_resample(X_train, targets_train)
+#     X_train = np.array(X_train)
+#
+#     X_test, targets_test = oversample.fit_resample(X_test, targets_test)
+#
+#     X_train = X_train.reshape(X_train.shape[0], VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE)
+#     X_test = X_test.reshape(X_test.shape[0], VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE)
+#
+#     targets_train = to_categorical(targets_train).astype(np.int32)
+#     targets_test = to_categorical(targets_test).astype(np.int32)
 
 def get_top(x_input):
     """Block top operations
@@ -127,12 +128,31 @@ def get_model(input_shape, nclasses=10):
     model = EffNet(input_shape, num_classes=nclasses)
     return model
 
+NUM_EPOCH = 200
+
+BASEDATA_PATH = "/media/virgantara/DATA1/Penelitian/Datasets"
+DATA_DIR = "dataset/45Deg_merged"
+# DATA_DIR = os.path.join(BASEDATA_PATH, "ModelNet40")
+path = Path(DATA_DIR)
+folders = [dir for dir in sorted(os.listdir(path)) if os.path.isdir(path / dir)]
+classes = {folder: i for i, folder in enumerate(folders)};
+NUM_CLASSES = np.array(folders).shape[0]
+NUM_EPOCH = 200
+# oversample = SMOTE()
+VOXEL_X = 16
+VOXEL_Y = 16
+VOXEL_Z = 16
+
+X_train, X_test, targets_train, targets_test = read_voxel_our(vx=VOXEL_X, vy=VOXEL_Y, vz=VOXEL_Z)
+
+
+
 # input_shape = (16,16,16)
 
 
 input_shape = VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE
 
-is_training = False
+is_training = True
 if is_training:
     model = get_model(input_shape=input_shape, nclasses=NUM_CLASSES)
     model.summary()
@@ -147,9 +167,9 @@ if is_training:
     #
     #
 
-    model.save("models/efficientnet_modelnet"+str(NUM_CLASSES)+".h5")
+    model.save("models/efficientnet_our_pose"+str(NUM_CLASSES)+".h5")
     hist_df = pd.DataFrame(history.history)
-    hist_csv_file = 'history_efficientnet_modelnet'+str(NUM_CLASSES)+'.csv'
+    hist_csv_file = 'history_efficientnet_our_pose'+str(NUM_CLASSES)+'.csv'
     with open(hist_csv_file, mode='w') as f:
         hist_df.to_csv(f)
 
@@ -171,12 +191,12 @@ if is_training:
     # plt.show()
 
 else:
-    model = tf.keras.models.load_model("models/efficientnet_modelnet"+str(NUM_CLASSES)+".h5")
+    model = tf.keras.models.load_model("models/efficientnet_our_pose"+str(NUM_CLASSES)+".h5")
 
 loss, accuracy = model.evaluate(X_test, targets_test)
 
 print(loss, accuracy)
-labels = ['bathtub', 'bed', 'chair', 'desk', 'dresser', 'monitor', 'night_stand', 'sofa', 'table', 'toilet']
+labels = folders
 pred = model.predict(X_test)
 pred = np.argmax(pred, axis=1)
 

@@ -20,6 +20,9 @@ from keras.utils import to_categorical
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn import metrics
+from utils import *
+from path import Path
+
 def identity_block(X, f, filters, stage, block):
     conv_name_base = 'res' + str(stage) + block + '_branch'
     bn_name_base = 'bn' + str(stage) + block + '_branch'
@@ -104,37 +107,49 @@ def ResNet50(input_shape = (64, 64, 3), classes = 10):
 
 if __name__ == "__main__":
     input_shape = (16,16,16)
-    NUM_CLASSES = 10
+    BASEDATA_PATH = "/media/virgantara/DATA1/Penelitian/Datasets"
+    DATA_DIR = "dataset/45Deg_merged"
+    # DATA_DIR = os.path.join(BASEDATA_PATH, "ModelNet40")
+    path = Path(DATA_DIR)
+    folders = [dir for dir in sorted(os.listdir(path)) if os.path.isdir(path / dir)]
+    classes = {folder: i for i, folder in enumerate(folders)};
+    NUM_CLASSES = np.array(folders).shape[0]
+    # oversample = SMOTE()
+    VOXEL_X = 16
+    VOXEL_Y = 16
+    VOXEL_Z = 16
+
+    X_train, X_test, targets_train, targets_test = read_voxel_our(vx=VOXEL_X, vy=VOXEL_Y, vz=VOXEL_Z)
 
 
-    oversample = SMOTE()
-    with h5py.File("data_voxel_"+str(NUM_CLASSES)+".h5", "r") as hf:
-        X_train = hf["X_train"][:]
-        X_train = np.array(X_train)
+    # oversample = SMOTE()
+    # with h5py.File("data_voxel_"+str(NUM_CLASSES)+".h5", "r") as hf:
+    #     X_train = hf["X_train"][:]
+    #     X_train = np.array(X_train)
+    #
+    #     targets_train = hf["y_train"][:]
+    #
+    #     X_test = hf["X_test"][:]
+    #     X_test = np.array(X_test)
+    #
+    #     targets_test = hf["y_test"][:]
+    #     test_y = targets_test
+    #     # Determine sample shape
+    #     sample_shape = (16, 16, 16)
+    #
+    #     # X_train, targets_train = oversample.fit_resample(X_train, targets_train)
+    #     X_train = np.array(X_train)
+    #
+    #     # X_test, targets_test = oversample.fit_resample(X_test, targets_test)
+    #
+    #     X_train = X_train.reshape(X_train.shape[0], 16, 16, 16)
+    #     X_test = X_test.reshape(X_test.shape[0], 16, 16, 16)
+    #
+    #     targets_train = to_categorical(targets_train).astype(np.int32)
+    #     targets_test = to_categorical(targets_test).astype(np.int32)
 
-        targets_train = hf["y_train"][:]
-
-        X_test = hf["X_test"][:]
-        X_test = np.array(X_test)
-
-        targets_test = hf["y_test"][:]
-        test_y = targets_test
-        # Determine sample shape
-        sample_shape = (16, 16, 16)
-
-        # X_train, targets_train = oversample.fit_resample(X_train, targets_train)
-        X_train = np.array(X_train)
-
-        # X_test, targets_test = oversample.fit_resample(X_test, targets_test)
-
-        X_train = X_train.reshape(X_train.shape[0], 16, 16, 16)
-        X_test = X_test.reshape(X_test.shape[0], 16, 16, 16)
-
-        targets_train = to_categorical(targets_train).astype(np.int32)
-        targets_test = to_categorical(targets_test).astype(np.int32)
-
-    NUM_EPOCH = 50
-    is_training = False
+    NUM_EPOCH = 200
+    is_training = True
     if is_training:
         model = ResNet50(input_shape=input_shape, classes=NUM_CLASSES)
         model.summary()
@@ -145,9 +160,9 @@ if __name__ == "__main__":
         history = model.fit(X_train, targets_train, epochs=NUM_EPOCH, verbose=1,
                             validation_split=0.2)
 
-        model.save('resnet50_modelnet'+str(NUM_CLASSES)+'.h5', save_format='h5')
+        model.save('resnet50_our_pose'+str(NUM_CLASSES)+'.h5', save_format='h5')
         hist_df = pd.DataFrame(history.history)
-        hist_csv_file = 'history/history_resnet50_modelnet'+str(NUM_CLASSES)+'.csv'
+        hist_csv_file = 'history/history_resnet50_our_pose'+str(NUM_CLASSES)+'.csv'
         with open(hist_csv_file, mode='w') as f:
             hist_df.to_csv(f)
 
@@ -168,12 +183,12 @@ if __name__ == "__main__":
         plt.legend(['train', 'test'], loc="upper left")
         plt.show()
     else:
-        model = tf.keras.models.load_model("models/resnet50_modelnet10.h5")
+        model = tf.keras.models.load_model("models/resnet50_our_pose.h5")
 
     loss, accuracy = model.evaluate(X_test, targets_test)
 
     print(loss, accuracy)
-    labels = ['bathtub', 'bed', 'chair', 'desk', 'dresser', 'monitor', 'night_stand', 'sofa', 'table', 'toilet']
+    labels = folders
     pred = model.predict(X_test)
     pred = np.argmax(pred, axis=1)
 
