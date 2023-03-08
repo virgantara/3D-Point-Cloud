@@ -204,24 +204,7 @@ def EffNet(input_shape, num_classes, plot_model=False):
 
     # x = GlobalAveragePooling2D()(x)
     x = tf.keras.layers.Flatten()(x)
-    # print(x.shape)
-    # neuro fuzzy inference
-    mu = 3.0
-    sigma = 1.0
-    n_femap = 64
-    if VOXEL_SIZE <= 8:
-        n_femap = VOXEL_SIZE * 2
-    #     feature_maps = Flatten()(x)
-    fuzzy_inference = []
-    for i in tqdm(range(n_femap)):
-        f_block = fuzzy_inference_block(output_dim=n_neurons, i_fmap=i, mu=mu, sigma=sigma)(x)
-        fuzzy_inference.append(f_block)
-
-    merged = concatenate(fuzzy_inference, axis=1)
-
-    #     output = Dense(n_classes, activation='softmax')(merged)
-
-    x = tf.keras.layers.Dense(num_classes, activation='softmax')(merged)
+    x = tf.keras.layers.Dense(num_classes, activation='softmax')(x)
     model = tf.keras.models.Model(inputs=x_input, outputs=x)
 
     if plot_model:
@@ -240,7 +223,7 @@ def get_model(input_shape, nclasses=10,is_training=False):
         # tf.keras.utils.plot_model(model,show_shapes=True)
         model.summary()
 
-        model.compile(optimizer=tf.keras.optimizers.RMSprop(),
+        model.compile(optimizer=tf.keras.optimizers.Adam(),
                       loss='categorical_crossentropy',
                       metrics=['accuracy'])
 
@@ -267,9 +250,9 @@ def get_model(input_shape, nclasses=10,is_training=False):
         plt.legend(['train', 'test'], loc="upper left")
         plt.show()
 
-        model.save_weights(filepath="weights/weight_do_neuro_fuzzy_effnet_pose"+str(NUM_CLASSES)+".h5")
+        model.save_weights(filepath="weights/weight_do_effnet_pose"+str(NUM_CLASSES)+".h5")
     else:
-        model = tf.keras.models.load_model("models/do_neuro_fuzzy_effnet_pose"+str(NUM_CLASSES)+".h5")
+        model = tf.keras.models.load_model("models/do_neuro_effnet_pose"+str(NUM_CLASSES)+".h5")
 
     return model
 # #

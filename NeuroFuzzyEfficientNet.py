@@ -10,7 +10,6 @@ from tensorflow.python.ops import array_ops
 from tensorflow.python.framework import tensor_shape
 from tensorflow.python.keras.utils import conv_utils
 from keras.layers import *
-from DOConv import *
 import h5py
 from imblearn.over_sampling import SMOTE
 import numpy as np
@@ -151,39 +150,29 @@ def EffNet(input_shape, num_classes, plot_model=False):
         x = tf.keras.layers.LeakyReLU()(x)
         return x
 
-    # def get_block(x_input, input_channels, output_channels):
-    #     """MBConv block
-    #     This function defines a mobile Inverted Residual Bottleneck block with BN and Leaky ReLU
-    #     # Arguments
-    #         x_input: Tensor, input tensor of conv layer.
-    #         input_channels: Integer, the dimentionality of the input space.
-    #         output_channels: Integer, the dimensionality of the output space.
-    #
-    #     # Returns
-    #         Output tensor.
-    #     """
-    #
-    #     x = tf.keras.layers.Conv2D(input_channels, kernel_size=(1, 1), padding='same', use_bias=False)(x_input)
-    #     x = get_top(x)
-    #     x = tf.keras.layers.DepthwiseConv2D(kernel_size=(1, 3), padding='same', use_bias=False)(x)
-    #     x = get_top(x)
-    #     x = tf.keras.layers.MaxPooling2D(pool_size=(2, 1), strides=(2, 1))(x)
-    #     x = tf.keras.layers.DepthwiseConv2D(kernel_size=(3, 1), padding='same', use_bias=False)(x)
-    #     x = get_top(x)
-    #     x = tf.keras.layers.Conv2D(output_channels, kernel_size=(2, 1), strides=(1, 2), padding='same', use_bias=False)(
-    #         x)
-    #     return x
+    def get_block(x_input, input_channels, output_channels):
+        """MBConv block
+        This function defines a mobile Inverted Residual Bottleneck block with BN and Leaky ReLU
+        # Arguments
+            x_input: Tensor, input tensor of conv layer.
+            input_channels: Integer, the dimentionality of the input space.
+            output_channels: Integer, the dimensionality of the output space.
 
-    def get_do_block(x_input, input_channels, output_channels):
-        x = DOConv2D(input_channels, kernel_size=(1, 1), padding='same', use_bias=False)(x_input)
+        # Returns
+            Output tensor.
+        """
+
+        x = tf.keras.layers.Conv2D(input_channels, kernel_size=(1, 1), padding='same', use_bias=False)(x_input)
         x = get_top(x)
         x = tf.keras.layers.DepthwiseConv2D(kernel_size=(1, 3), padding='same', use_bias=False)(x)
         x = get_top(x)
         x = tf.keras.layers.MaxPooling2D(pool_size=(2, 1), strides=(2, 1))(x)
         x = tf.keras.layers.DepthwiseConv2D(kernel_size=(3, 1), padding='same', use_bias=False)(x)
         x = get_top(x)
-        x = DOConv2D(output_channels, kernel_size=(2, 1), strides=(1, 2), padding='same', use_bias=False)(x)
+        x = tf.keras.layers.Conv2D(output_channels, kernel_size=(2, 1), strides=(1, 2), padding='same', use_bias=False)(
+            x)
         return x
+
     """EffNet
     This function defines a EfficientNet architecture.
     # Arguments
@@ -198,9 +187,9 @@ def EffNet(input_shape, num_classes, plot_model=False):
     #     x = get_block(x_input, 32, 64)
     #     x = get_block(x, 64, 128)
     #     x = get_block(x, 128, 256)
-    x = get_do_block(x_input, 32, 64)
-    x = get_do_block(x, 64, 128)
-    x = get_do_block(x, 128, 256)
+    x = get_block(x_input, 32, 64)
+    x = get_block(x, 64, 128)
+    x = get_block(x, 128, 256)
 
     # x = GlobalAveragePooling2D()(x)
     x = tf.keras.layers.Flatten()(x)
@@ -240,7 +229,7 @@ def get_model(input_shape, nclasses=10,is_training=False):
         # tf.keras.utils.plot_model(model,show_shapes=True)
         model.summary()
 
-        model.compile(optimizer=tf.keras.optimizers.RMSprop(),
+        model.compile(optimizer=tf.keras.optimizers.Adam(),
                       loss='categorical_crossentropy',
                       metrics=['accuracy'])
 
