@@ -27,6 +27,10 @@ from sklearn.metrics import confusion_matrix, accuracy_score
 # sns.set_style('white')
 import uuid
 
+from path import Path
+from sklearn.model_selection import train_test_split
+from sklearn import metrics
+
 print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
 # Set the seed value for experiment reproducibility.
 seed = 1842
@@ -36,52 +40,15 @@ np.random.seed(seed)
 warnings.simplefilter('ignore')
 oversample = SMOTE()
 
+BASEDATA_PATH = "/media/virgantara/DATA1/Penelitian/Datasets/"
+# DATA_DIR = ""
+DATA_DIR = os.path.join(BASEDATA_PATH, "ModelNet10")
 
-# number of neurons as number of Rule will be produce
-n_neurons = 100
+path = Path(DATA_DIR)
+folders = [dir for dir in sorted(os.listdir(path)) if os.path.isdir(path/dir)]
+classes = {folder: i for i, folder in enumerate(folders)};
 
-# number of features feed to fuzzy Inference Layer
-n_feature = 9
-
-# based of article
-batch_size = 70
-# to get all permutaion
-fRules = list(product([-1.0,0.0,1.0], repeat=n_feature))
-
-# based on article just 100 of them are needed
-out_fRules = random.sample(fRules, n_neurons)
-
-fRules_sigma = K.transpose(out_fRules)
-
-
-class fuzzy_inference_block(tf.keras.layers.Layer):
-    def __init__(self, output_dim, i_fmap, mu, sigma):
-        self.output_dim = output_dim
-        self.index = i_fmap
-        self.mu = mu
-        self.sigma = sigma
-
-        super(fuzzy_inference_block, self).__init__()
-
-    def build(self, input_shape):
-        self.mu_map = fRules_sigma * self.mu
-        self.sigma_map = tf.ones((n_feature, self.output_dim)) * self.sigma
-
-        super().build(input_shape)
-
-    def call(self, inputs):
-        fMap = inputs[:, n_feature * (self.index):n_feature * (self.index + 1)]
-        # create variables for processing
-        aligned_x = K.repeat_elements(K.expand_dims(fMap, axis=-1), self.output_dim, -1)
-        aligned_c = self.mu_map
-        aligned_s = self.sigma_map
-
-        # calculate output of each neuron (fuzzy rule)
-        phi = K.exp(-K.sum(K.square(aligned_x - aligned_c) / (2 * K.square(aligned_s)),
-                           axis=-2, keepdims=False))
-        return phi
-
-NUM_CLASSES = 10
+NUM_CLASSES = np.array(folders).shape[0]
 
 with h5py.File("data_voxel_"+str(NUM_CLASSES)+".h5", "r") as hf:
     X_train = hf["X_train"][:]
@@ -117,18 +84,7 @@ def get_model(input_shape, nclasses=10):
     x = DOConv2D(64, (2, 2), activation='relu')(x)
     x = tf.keras.layers.Flatten()(x)
 
-    # neuro fuzzy inference
-    mu = 3.0
-    sigma = 1.0
-    n_femap = 64
-    #     feature_maps = Flatten()(x)
-    fuzzy_inference = []
-    for i in tqdm(range(n_femap)):
-        f_block = fuzzy_inference_block(output_dim=n_neurons, i_fmap=i, mu=mu, sigma=sigma)(x)
-        fuzzy_inference.append(f_block)
-
-    merged = concatenate(fuzzy_inference, axis=1)
-    x = tf.keras.layers.Dense(nclasses, activation='softmax')(merged)
+    x = tf.keras.layers.Dense(nclasses, activation='softmax')(x)
     model = tf.keras.models.Model(inputs=x_input, outputs=x)
 
     return model
@@ -160,25 +116,32 @@ pred = model.predict(X_test)
 # pred = np.argmax(pred, axis=1)
 res = confusion_matrix(np.argmax(targets_test, axis=1), np.argmax(pred, axis=1))
 print(res)
+
+labels = folders
+y_pred = np.argmax(pred, axis=1)
+
+y_test = np.argmax(targets_test, axis=1)
+#
+report = metrics.classification_report(y_test, y_pred,target_names=labels)
+print(report)
 # cm = pd.DataFrame(res, index = range(NUM_CLASSES), columns = range(NUM_CLASSES))
 # plt.figure(figsize=(20,20))
 # sns.heatmap(cm, annot=True)
 # plt.show()
 #
-# plt.plot(history.history['loss'], label='Categorical crossentropy (training data)')
-# plt.plot(history.history['val_loss'], label='Categorical crossentropy (validation data)')
-# plt.title('Model performance for 3D Voxel Keras Conv2D (Loss)')
-# plt.ylabel('Loss value')
-# plt.xlabel('No. epoch')
-# plt.legend(['train','test'],loc="upper left")
-# plt.show()
-#
-# # # Plot history: Categorical Accuracy
-# plt.plot(history.history['accuracy'], label='Accuracy (training data)')
-# plt.plot(history.history['val_accuracy'], label='Accuracy (validation data)')
-# plt.title('Model performance for 3D Voxel Keras Conv2D (Accuracy)')
-# plt.ylabel('Accuracy value')
-# plt.xlabel('No. epoch')
-# plt.legend(['train','test'],loc="upper left")
-# plt.show()
+plt.plot(history.history['loss'], label='Categorical crossentropy (training data)')
+plt.plot(history.history['val_loss'], label='Categorical crossentropy (validation data)')
+plt.title('Model performance for 3D Voxel Keras Conv2D (Loss)')
+plt.ylabel('Loss value')
+plt.xlabel('No. epoch')
+plt.legend(['train', 'test'], loc="upper left")
+plt.show()
 
+# # Plot history: Categorical Accuracy
+plt.plot(history.history['accuracy'], label='Accuracy (training data)')
+plt.plot(history.history['val_accuracy'], label='Accuracy (validation data)')
+plt.title('Model performance for 3D Voxel Keras Conv2D (Accuracy)')
+plt.ylabel('Accuracy value')
+plt.xlabel('No. epoch')
+plt.legend(['train', 'test'], loc="upper left")
+plt.show()

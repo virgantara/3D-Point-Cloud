@@ -67,41 +67,41 @@ if __name__ == "__main__":
     input_shape = (16,16,16)
     VOXEL_SIZE = 16
     BASEDATA_PATH = "/media/virgantara/DATA1/Penelitian/Datasets"
-    DATA_DIR = "dataset/45Deg_merged"
-    # DATA_DIR = os.path.join(BASEDATA_PATH, "ModelNet40")
+    # DATA_DIR = "dataset/45Deg_merged"
+    DATA_DIR = os.path.join(BASEDATA_PATH, "ModelNet10")
     path = Path(DATA_DIR)
     folders = [dir for dir in sorted(os.listdir(path)) if os.path.isdir(path / dir)]
     classes = {folder: i for i, folder in enumerate(folders)};
     NUM_CLASSES = np.array(folders).shape[0]
     oversample = SMOTE()
 
-    X_train, X_test, targets_train, targets_test = read_voxel_our(vx=VOXEL_X, vy=VOXEL_Y, vz=VOXEL_Z)
-    # with h5py.File("data_voxel_"+str(NUM_CLASSES)+"_16.h5", "r") as hf:
-    #     X_train = hf["X_train"][:]
-    #     X_train = np.array(X_train)
-    #
-    #     targets_train = hf["y_train"][:]
-    #
-    #     X_test = hf["X_test"][:]
-    #     X_test = np.array(X_test)
-    #
-    #     targets_test = hf["y_test"][:]
-    #     test_y = targets_test
-    #     # Determine sample shape
-    #     sample_shape = (16, 16, 16)
-    #
-    #     X_train, targets_train = oversample.fit_resample(X_train, targets_train)
-    #     X_train = np.array(X_train)
-    #
-    #     X_test, targets_test = oversample.fit_resample(X_test, targets_test)
-    #
-    #     X_train = X_train.reshape(X_train.shape[0], 16, 16, 16)
-    #     X_test = X_test.reshape(X_test.shape[0], 16, 16, 16)
-    #
-    #     targets_train = to_categorical(targets_train).astype(np.int32)
-    #     targets_test = to_categorical(targets_test).astype(np.int32)
+    # X_train, X_test, targets_train, targets_test = read_voxel_our(vx=VOXEL_X, vy=VOXEL_Y, vz=VOXEL_Z)
+    with h5py.File("data_voxel_"+str(NUM_CLASSES)+"_16.h5", "r") as hf:
+        X_train = hf["X_train"][:]
+        X_train = np.array(X_train)
 
-    NUM_EPOCH = 200
+        targets_train = hf["y_train"][:]
+
+        X_test = hf["X_test"][:]
+        X_test = np.array(X_test)
+
+        targets_test = hf["y_test"][:]
+        test_y = targets_test
+        # Determine sample shape
+        sample_shape = (16, 16, 16)
+
+        X_train, targets_train = oversample.fit_resample(X_train, targets_train)
+        X_train = np.array(X_train)
+
+        X_test, targets_test = oversample.fit_resample(X_test, targets_test)
+
+        X_train = X_train.reshape(X_train.shape[0], 16, 16, 16)
+        X_test = X_test.reshape(X_test.shape[0], 16, 16, 16)
+
+        targets_train = to_categorical(targets_train).astype(np.int32)
+        targets_test = to_categorical(targets_test).astype(np.int32)
+
+    NUM_EPOCH = 50
 
     is_training = True
     if is_training:

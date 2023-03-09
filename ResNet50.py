@@ -108,8 +108,8 @@ def ResNet50(input_shape = (64, 64, 3), classes = 10):
 if __name__ == "__main__":
     input_shape = (16,16,16)
     BASEDATA_PATH = "/media/virgantara/DATA1/Penelitian/Datasets"
-    DATA_DIR = "dataset/45Deg_merged"
-    # DATA_DIR = os.path.join(BASEDATA_PATH, "ModelNet40")
+    # DATA_DIR = "dataset/45Deg_merged"
+    DATA_DIR = os.path.join(BASEDATA_PATH, "ModelNet10")
     path = Path(DATA_DIR)
     folders = [dir for dir in sorted(os.listdir(path)) if os.path.isdir(path / dir)]
     classes = {folder: i for i, folder in enumerate(folders)};
@@ -119,36 +119,36 @@ if __name__ == "__main__":
     VOXEL_Y = 16
     VOXEL_Z = 16
 
-    X_train, X_test, targets_train, targets_test = read_voxel_our(vx=VOXEL_X, vy=VOXEL_Y, vz=VOXEL_Z)
+    # X_train, X_test, targets_train, targets_test = read_voxel_our(vx=VOXEL_X, vy=VOXEL_Y, vz=VOXEL_Z)
 
 
-    # oversample = SMOTE()
-    # with h5py.File("data_voxel_"+str(NUM_CLASSES)+".h5", "r") as hf:
-    #     X_train = hf["X_train"][:]
-    #     X_train = np.array(X_train)
-    #
-    #     targets_train = hf["y_train"][:]
-    #
-    #     X_test = hf["X_test"][:]
-    #     X_test = np.array(X_test)
-    #
-    #     targets_test = hf["y_test"][:]
-    #     test_y = targets_test
-    #     # Determine sample shape
-    #     sample_shape = (16, 16, 16)
-    #
-    #     # X_train, targets_train = oversample.fit_resample(X_train, targets_train)
-    #     X_train = np.array(X_train)
-    #
-    #     # X_test, targets_test = oversample.fit_resample(X_test, targets_test)
-    #
-    #     X_train = X_train.reshape(X_train.shape[0], 16, 16, 16)
-    #     X_test = X_test.reshape(X_test.shape[0], 16, 16, 16)
-    #
-    #     targets_train = to_categorical(targets_train).astype(np.int32)
-    #     targets_test = to_categorical(targets_test).astype(np.int32)
+    oversample = SMOTE()
+    with h5py.File("data_voxel_"+str(NUM_CLASSES)+".h5", "r") as hf:
+        X_train = hf["X_train"][:]
+        X_train = np.array(X_train)
 
-    NUM_EPOCH = 200
+        targets_train = hf["y_train"][:]
+
+        X_test = hf["X_test"][:]
+        X_test = np.array(X_test)
+
+        targets_test = hf["y_test"][:]
+        test_y = targets_test
+        # Determine sample shape
+        sample_shape = (16, 16, 16)
+
+        X_train, targets_train = oversample.fit_resample(X_train, targets_train)
+        X_train = np.array(X_train)
+
+        X_test, targets_test = oversample.fit_resample(X_test, targets_test)
+
+        X_train = X_train.reshape(X_train.shape[0], 16, 16, 16)
+        X_test = X_test.reshape(X_test.shape[0], 16, 16, 16)
+
+        targets_train = to_categorical(targets_train).astype(np.int32)
+        targets_test = to_categorical(targets_test).astype(np.int32)
+
+    NUM_EPOCH = 50
     is_training = True
     if is_training:
         model = ResNet50(input_shape=input_shape, classes=NUM_CLASSES)
@@ -160,11 +160,11 @@ if __name__ == "__main__":
         history = model.fit(X_train, targets_train, epochs=NUM_EPOCH, verbose=1,
                             validation_split=0.2)
 
-        model.save('resnet50_our_pose'+str(NUM_CLASSES)+'.h5', save_format='h5')
-        hist_df = pd.DataFrame(history.history)
-        hist_csv_file = 'history/history_resnet50_our_pose'+str(NUM_CLASSES)+'.csv'
-        with open(hist_csv_file, mode='w') as f:
-            hist_df.to_csv(f)
+        # model.save('resnet50_our_pose'+str(NUM_CLASSES)+'.h5', save_format='h5')
+        # hist_df = pd.DataFrame(history.history)
+        # hist_csv_file = 'history/history_resnet50_our_pose'+str(NUM_CLASSES)+'.csv'
+        # with open(hist_csv_file, mode='w') as f:
+        #     hist_df.to_csv(f)
 
         plt.plot(history.history['loss'], label='Categorical crossentropy (training data)')
         plt.plot(history.history['val_loss'], label='Categorical crossentropy (validation data)')
