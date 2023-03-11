@@ -20,6 +20,8 @@ from sklearn.model_selection import train_test_split
 # Define ReLU6 activation
 relu6 = tf.keras.layers.ReLU(6.)
 
+from imblearn.metrics import classification_report_imbalanced
+
 def _conv_block(inputs, filters, kernel, strides):
     """Convolution Block
     This function defines a 2D convolution operation with BN and relu6.
@@ -168,8 +170,8 @@ if __name__ == "__main__":
 
     BASEDATA_PATH = "/media/virgantara/DATA1/Penelitian/Datasets"
 
-    DATA_DIR = os.path.join(BASEDATA_PATH, "ModelNet10")
-    # DATA_DIR = "dataset/45Deg_merged"
+    # DATA_DIR = os.path.join(BASEDATA_PATH, "ModelNet10")
+    DATA_DIR = "dataset/45Deg_merged"
     path = Path(DATA_DIR)
     folders = [dir for dir in sorted(os.listdir(path)) if os.path.isdir(path / dir)]
     classes = {folder: i for i, folder in enumerate(folders)};
@@ -178,31 +180,31 @@ if __name__ == "__main__":
 
     oversample = SMOTE()
 
-    # X_train, X_test, targets_train, targets_test = read_voxel_our(voxelsize=VOXEL_SIZE)
-    with h5py.File("data_voxel_" + str(NUM_CLASSES) + "_16.h5", "r") as hf:
-        X_train = hf["X_train"][:]
-        X_train = np.array(X_train)
-
-        targets_train = hf["y_train"][:]
-
-        X_test = hf["X_test"][:]
-        X_test = np.array(X_test)
-
-        targets_test = hf["y_test"][:]
-        test_y = targets_test
-        # Determine sample shape
-        sample_shape = (16, 16, 16)
-
-        X_train, targets_train = oversample.fit_resample(X_train, targets_train)
-        X_train = np.array(X_train)
-
-        X_test, targets_test = oversample.fit_resample(X_test, targets_test)
-
-        X_train = X_train.reshape(X_train.shape[0], 16, 16, 16)
-        X_test = X_test.reshape(X_test.shape[0], 16, 16, 16)
-
-        targets_train = to_categorical(targets_train).astype(np.int32)
-        targets_test = to_categorical(targets_test).astype(np.int32)
+    X_train, X_test, y_train, y_test = read_voxel_our(voxelsize=VOXEL_SIZE)
+    # with h5py.File("data_voxel_" + str(NUM_CLASSES) + "_16.h5", "r") as hf:
+    #     X_train = hf["X_train"][:]
+    #     X_train = np.array(X_train)
+    #
+    #     targets_train = hf["y_train"][:]
+    #
+    #     X_test = hf["X_test"][:]
+    #     X_test = np.array(X_test)
+    #
+    #     targets_test = hf["y_test"][:]
+    #     test_y = targets_test
+    #     # Determine sample shape
+    #     sample_shape = (16, 16, 16)
+    #
+    #     X_train, targets_train = oversample.fit_resample(X_train, targets_train)
+    #     X_train = np.array(X_train)
+    #
+    #     X_test, targets_test = oversample.fit_resample(X_test, targets_test)
+    #
+    #     X_train = X_train.reshape(X_train.shape[0], 16, 16, 16)
+    #     X_test = X_test.reshape(X_test.shape[0], 16, 16, 16)
+    #
+    #     targets_train = to_categorical(targets_train).astype(np.int32)
+    #     targets_test = to_categorical(targets_test).astype(np.int32)
     NUM_EPOCH = 50
     is_training = True
     if is_training:
@@ -211,8 +213,9 @@ if __name__ == "__main__":
                       loss='categorical_crossentropy',
                       metrics=['accuracy'])
 
-        history = model.fit(X_train, targets_train, epochs=NUM_EPOCH, verbose=1,
-                            validation_split=0.2)
+        callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=10)
+        history = model.fit(X_train, y_train, epochs=NUM_EPOCH, verbose=1,
+                            validation_split=0.2, callbacks=[callback])
 
         # model.save('models/mobilenetv2_our_pose'+str(NUM_CLASSES)+'.h5', save_format='h5')
         hist_df = pd.DataFrame(history.history)
@@ -241,7 +244,7 @@ if __name__ == "__main__":
     else:
         model = tf.keras.models.load_model("models/mobilenetv2_our_pose" + str(NUM_CLASSES) + ".h5")
 
-    loss, accuracy = model.evaluate(X_test, targets_test)
+    loss, accuracy = model.evaluate(X_test, y_test)
 
     print(loss, accuracy)
 
@@ -249,9 +252,10 @@ if __name__ == "__main__":
     pred = model.predict(X_test)
     pred = np.argmax(pred, axis=1)
 
-    y = np.argmax(targets_test, axis=1)
+    y = np.argmax(y_test, axis=1)
 
-    report = metrics.classification_report(y, pred, target_names=labels)
+    # report = metrics.classification_report(y, pred, target_names=labels)
+    report = classification_report_imbalanced(y, pred, target_names=labels)
     print(report)
 
 

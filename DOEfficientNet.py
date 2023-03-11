@@ -72,7 +72,7 @@ class fuzzy_inference_block(tf.keras.layers.Layer):
 
 BASEDATA_PATH = "/media/virgantara/DATA1/Penelitian/Datasets"
 
-# DATA_DIR = os.path.join(BASEDATA_PATH, "")
+# DATA_DIR = os.path.join(BASEDATA_PATH, "ModelNet10")
 DATA_DIR = "dataset/45Deg_merged"
 path = Path(DATA_DIR)
 folders = [dir for dir in sorted(os.listdir(path)) if os.path.isdir(path/dir)]
@@ -129,7 +129,7 @@ def read_voxel_our(voxelsize=16):
 
     return X_train, X_test, y_train, y_test
 
-NUM_EPOCH = 200
+NUM_EPOCH = 500
 
 # X_train, X_test, targets_train, targets_test = read_voxel_modelnet(nclasses=NUM_CLASSES, voxelsize=VOXEL_SIZE)
 X_train, X_test, targets_train, targets_test = read_voxel_our(voxelsize=VOXEL_SIZE)
@@ -179,7 +179,7 @@ def EffNet(input_shape, num_classes, plot_model=False):
         x = get_top(x)
         x = tf.keras.layers.DepthwiseConv2D(kernel_size=(1, 3), padding='same', use_bias=False)(x)
         x = get_top(x)
-        x = tf.keras.layers.MaxPooling2D(pool_size=(2, 1), strides=(2, 1))(x)
+        x = tf.keras.layers.MaxPooling2D(pool_size=(1, 1), strides=(2, 1))(x)
         x = tf.keras.layers.DepthwiseConv2D(kernel_size=(3, 1), padding='same', use_bias=False)(x)
         x = get_top(x)
         x = DOConv2D(output_channels, kernel_size=(2, 1), strides=(1, 2), padding='same', use_bias=False)(x)
@@ -201,9 +201,11 @@ def EffNet(input_shape, num_classes, plot_model=False):
     x = get_do_block(x_input, 32, 64)
     x = get_do_block(x, 64, 128)
     x = get_do_block(x, 128, 256)
+    x = get_do_block(x, 256, 512)
+    x = get_do_block(x, 512, 1024)
 
-    # x = GlobalAveragePooling2D()(x)
-    x = tf.keras.layers.Flatten()(x)
+    x = GlobalAveragePooling2D()(x)
+    # x = tf.keras.layers.Flatten()(x)
     x = tf.keras.layers.Dense(num_classes, activation='softmax')(x)
     model = tf.keras.models.Model(inputs=x_input, outputs=x)
 

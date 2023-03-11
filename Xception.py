@@ -4,7 +4,7 @@ from tensorflow.keras.layers import SeparableConv2D,ReLU
 from tensorflow.keras.layers import BatchNormalization,MaxPool2D
 from tensorflow.keras.layers import GlobalAvgPool2D
 from tensorflow.keras import Model
-
+from imblearn.metrics import classification_report_imbalanced
 from sklearn import metrics
 import h5py
 from imblearn.over_sampling import SMOTE
@@ -114,8 +114,8 @@ if __name__ == "__main__":
 
 
     BASEDATA_PATH = "/media/virgantara/DATA1/Penelitian/Datasets"
-    # DATA_DIR = "dataset/45Deg_merged"
-    DATA_DIR = os.path.join(BASEDATA_PATH, "ModelNet10")
+    DATA_DIR = "dataset/45Deg_merged"
+    # DATA_DIR = os.path.join(BASEDATA_PATH, "ModelNet10")
     path = Path(DATA_DIR)
     folders = [dir for dir in sorted(os.listdir(path)) if os.path.isdir(path / dir)]
     classes = {folder: i for i, folder in enumerate(folders)};
@@ -128,30 +128,30 @@ if __name__ == "__main__":
 
     X_train, X_test, targets_train, targets_test = read_voxel_our(vx=VOXEL_X, vy=VOXEL_Y, vz=VOXEL_Z)
     oversample = SMOTE()
-    with h5py.File("data_voxel_"+str(NUM_CLASSES)+".h5", "r") as hf:
-        X_train = hf["X_train"][:]
-        X_train = np.array(X_train)
-
-        targets_train = hf["y_train"][:]
-
-        X_test = hf["X_test"][:]
-        X_test = np.array(X_test)
-
-        targets_test = hf["y_test"][:]
-        test_y = targets_test
-        # Determine sample shape
-        sample_shape = (16, 16, 16)
-
-        X_train, targets_train = oversample.fit_resample(X_train, targets_train)
-        X_train = np.array(X_train)
-
-        X_test, targets_test = oversample.fit_resample(X_test, targets_test)
-
-        X_train = X_train.reshape(X_train.shape[0], 16, 16, 16)
-        X_test = X_test.reshape(X_test.shape[0], 16, 16, 16)
-
-        targets_train = to_categorical(targets_train).astype(np.int32)
-        targets_test = to_categorical(targets_test).astype(np.int32)
+    # with h5py.File("data_voxel_"+str(NUM_CLASSES)+".h5", "r") as hf:
+    #     X_train = hf["X_train"][:]
+    #     X_train = np.array(X_train)
+    #
+    #     targets_train = hf["y_train"][:]
+    #
+    #     X_test = hf["X_test"][:]
+    #     X_test = np.array(X_test)
+    #
+    #     targets_test = hf["y_test"][:]
+    #     test_y = targets_test
+    #     # Determine sample shape
+    #     sample_shape = (16, 16, 16)
+    #
+    #     # X_train, targets_train = oversample.fit_resample(X_train, targets_train)
+    #     X_train = np.array(X_train)
+    #
+    #     # X_test, targets_test = oversample.fit_resample(X_test, targets_test)
+    #
+    #     X_train = X_train.reshape(X_train.shape[0], 16, 16, 16)
+    #     X_test = X_test.reshape(X_test.shape[0], 16, 16, 16)
+    #
+    #     targets_train = to_categorical(targets_train).astype(np.int32)
+    #     targets_test = to_categorical(targets_test).astype(np.int32)
     is_training = True
     if is_training:
         input = Input(shape=(16, 16, 16))
@@ -163,9 +163,9 @@ if __name__ == "__main__":
         model.compile(optimizer='adam',
                       loss='categorical_crossentropy',
                       metrics=['accuracy'])
-
+        callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=10)
         history = model.fit(X_train, targets_train, epochs=NUM_EPOCH, verbose=1,
-                            validation_split=0.2)
+                            validation_split=0.2,callbacks=[callback])
         hist_df = pd.DataFrame(history.history)
 
         # or save to csv:
@@ -206,7 +206,8 @@ if __name__ == "__main__":
 
     y = np.argmax(targets_test, axis=1)
 
-    report = metrics.classification_report(y, pred, target_names=labels)
+    # report = metrics.classification_report(y, pred, target_names=labels)
+    report = classification_report_imbalanced(y, pred, target_names=labels)
     print(report)
 
 

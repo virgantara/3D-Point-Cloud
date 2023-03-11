@@ -28,7 +28,7 @@ from utils import *
 from path import Path
 import os
 from sklearn.model_selection import train_test_split
-
+from imblearn.metrics import classification_report_imbalanced
 VOXEL_SIZE = 16
 
 
@@ -105,13 +105,13 @@ def get_model(input_shape, nclasses=10):
 NUM_EPOCH = 200
 
 BASEDATA_PATH = "/media/virgantara/DATA1/Penelitian/Datasets"
-# DATA_DIR = "dataset/45Deg_merged"
-DATA_DIR = os.path.join(BASEDATA_PATH, "ModelNet10")
+DATA_DIR = "dataset/45Deg_merged"
+# DATA_DIR = os.path.join(BASEDATA_PATH, "ModelNet10")
 path = Path(DATA_DIR)
 folders = [dir for dir in sorted(os.listdir(path)) if os.path.isdir(path / dir)]
 classes = {folder: i for i, folder in enumerate(folders)};
 NUM_CLASSES = np.array(folders).shape[0]
-NUM_EPOCH = 50
+
 # oversample = SMOTE()
 VOXEL_X = 16
 VOXEL_Y = 16
@@ -119,32 +119,32 @@ VOXEL_Z = 16
 
 # NUM_CLASSES = 10
 oversample = SMOTE()
-with h5py.File("data_voxel_"+str(NUM_CLASSES)+"_"+str(VOXEL_SIZE)+".h5", "r") as hf:
-    X_train = hf["X_train"][:]
-    X_train = np.array(X_train)
+# with h5py.File("data_voxel_"+str(NUM_CLASSES)+"_"+str(VOXEL_SIZE)+".h5", "r") as hf:
+#     X_train = hf["X_train"][:]
+#     X_train = np.array(X_train)
+#
+#     targets_train = hf["y_train"][:]
+#
+#     X_test = hf["X_test"][:]
+#     X_test = np.array(X_test)
+#
+#     targets_test = hf["y_test"][:]
+#     test_y = targets_test
+#     # Determine sample shape
+#     sample_shape = (VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE)
+#
+#     X_train, targets_train = oversample.fit_resample(X_train, targets_train)
+#     X_train = np.array(X_train)
+#
+#     X_test, targets_test = oversample.fit_resample(X_test, targets_test)
+#
+#     X_train = X_train.reshape(X_train.shape[0], VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE)
+#     X_test = X_test.reshape(X_test.shape[0], VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE)
+#
+#     targets_train = to_categorical(targets_train).astype(np.int32)
+#     targets_test = to_categorical(targets_test).astype(np.int32)
 
-    targets_train = hf["y_train"][:]
-
-    X_test = hf["X_test"][:]
-    X_test = np.array(X_test)
-
-    targets_test = hf["y_test"][:]
-    test_y = targets_test
-    # Determine sample shape
-    sample_shape = (VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE)
-
-    X_train, targets_train = oversample.fit_resample(X_train, targets_train)
-    X_train = np.array(X_train)
-
-    X_test, targets_test = oversample.fit_resample(X_test, targets_test)
-
-    X_train = X_train.reshape(X_train.shape[0], VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE)
-    X_test = X_test.reshape(X_test.shape[0], VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE)
-
-    targets_train = to_categorical(targets_train).astype(np.int32)
-    targets_test = to_categorical(targets_test).astype(np.int32)
-
-# X_train, X_test, targets_train, targets_test = read_voxel_our(vx=VOXEL_X, vy=VOXEL_Y, vz=VOXEL_Z)
+X_train, X_test, y_train, y_test = read_voxel_our(vx=VOXEL_X, vy=VOXEL_Y, vz=VOXEL_Z)
 
 
 
@@ -161,10 +161,10 @@ if is_training:
     model.compile(optimizer='adam',
                   loss='categorical_crossentropy',
                   metrics=['accuracy'])
-
-
-    history = model.fit(X_train, targets_train, epochs=NUM_EPOCH, verbose=1,
-                        validation_split=0.3)
+    NUM_EPOCH = 50
+    callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=10)
+    history = model.fit(X_train, y_train, epochs=NUM_EPOCH, verbose=1,
+                        validation_split=0.2, callbacks=[callback])
     #
     #
 
@@ -194,16 +194,17 @@ if is_training:
 else:
     model = tf.keras.models.load_model("models/efficientnet_our_pose"+str(NUM_CLASSES)+".h5")
 
-loss, accuracy = model.evaluate(X_test, targets_test)
+loss, accuracy = model.evaluate(X_test, y_test)
 
 print(loss, accuracy)
 labels = folders
 pred = model.predict(X_test)
 pred = np.argmax(pred, axis=1)
 
-y = np.argmax(targets_test, axis=1)
+y = np.argmax(y_test, axis=1)
 
-report = metrics.classification_report(y, pred, target_names=labels)
+# report = metrics.classification_report(y, pred, target_names=labels)
+report = classification_report_imbalanced(y, pred, target_names=labels)
 print(report)
 
     #

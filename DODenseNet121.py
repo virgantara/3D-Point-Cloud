@@ -15,7 +15,8 @@ import matplotlib.pyplot as plt
 import os
 from utils import *
 from path import Path
-from imblearn.metrics import classification_report_imbalanced
+from DOConv import *
+
 # Creating Densenet121
 def densenet(input_shape, n_classes, filters = 32):
 
@@ -23,7 +24,7 @@ def densenet(input_shape, n_classes, filters = 32):
     def bn_rl_conv(x, filters, kernel=1, strides=1):
         x = BatchNormalization()(x)
         x = ReLU()(x)
-        x = Conv2D(filters, kernel, strides=strides, padding='same')(x)
+        x = DOConv2D(filters, kernel, strides=strides, padding='same')(x)
         return x
 
 
@@ -42,7 +43,7 @@ def densenet(input_shape, n_classes, filters = 32):
 
 
     input = Input(input_shape)
-    x = Conv2D(64, 7, strides=2, padding='same')(input)
+    x = DOConv2D(64, 7, strides=2, padding='same')(input)
     x = MaxPool2D(3, strides=2, padding='same')(x)
 
     for repetition in [6, 12, 24, 16]:
@@ -60,8 +61,8 @@ VOXEL_X = 16
 VOXEL_Y = 16
 VOXEL_Z = 16
 
-from sklearn.model_selection import StratifiedKFold, KFold
-from tqdm import tqdm
+
+
 
 if __name__ == "__main__":
     input_shape = (16,16,16)
@@ -75,7 +76,7 @@ if __name__ == "__main__":
     NUM_CLASSES = np.array(folders).shape[0]
     oversample = SMOTE()
 
-    X_train, X_test, y_train, y_test = read_voxel_our(vx=VOXEL_X, vy=VOXEL_Y, vz=VOXEL_Z)
+    X_train, X_test, targets_train, targets_test = read_voxel_our(vx=VOXEL_X, vy=VOXEL_Y, vz=VOXEL_Z)
     # with h5py.File("data_voxel_"+str(NUM_CLASSES)+"_16.h5", "r") as hf:
     #     X_train = hf["X_train"][:]
     #     X_train = np.array(X_train)
@@ -101,17 +102,9 @@ if __name__ == "__main__":
     #     targets_train = to_categorical(targets_train).astype(np.int32)
     #     targets_test = to_categorical(targets_test).astype(np.int32)
 
-    NUM_EPOCH = 50
+    NUM_EPOCH = 200
 
     is_training = True
-    VALIDATION_ACCURACY = []
-    VALIDATION_LOSS = []
-    # model = densenet(input_shape=input_shape, n_classes=NUM_CLASSES)
-    # model.compile(optimizer='adam',
-    #                   loss='categorical_crossentropy',
-    #                   metrics=['accuracy'])
-    callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=3)
-
     if is_training:
         model = densenet(input_shape=input_shape, n_classes=NUM_CLASSES)
         model.summary()
@@ -119,7 +112,7 @@ if __name__ == "__main__":
                       loss='categorical_crossentropy',
                       metrics=['accuracy'])
 
-        history = model.fit(X_train, y_train, epochs=NUM_EPOCH, verbose=1,
+        history = model.fit(X_train, targets_train, epochs=NUM_EPOCH, verbose=1,
                             validation_split=0.2)
 
         # model.save('densenet121_modelnet'+str(NUM_CLASSES)+'.h5', save_format='h5')
@@ -149,22 +142,17 @@ if __name__ == "__main__":
     else:
         model = tf.keras.models.load_model("models/densenet121_modelnet10.h5")
 
-    loss, accuracy = model.evaluate(X_test, y_test)
-    VALIDATION_ACCURACY.append(accuracy)
-    VALIDATION_LOSS.append(loss)
+    loss, accuracy = model.evaluate(X_test, targets_test)
+
     print(loss, accuracy)
 
     labels = folders
     pred = model.predict(X_test)
     pred = np.argmax(pred, axis=1)
 
-    y = np.argmax(y_test, axis=1)
+    y = np.argmax(targets_test, axis=1)
 
-    report = classification_report_imbalanced(y, pred, target_names=labels)
-    # report = metrics.classification_report(y, pred, target_names=labels)
+    report = metrics.classification_report(y, pred, target_names=labels)
     print(report)
 
-
-    print("ACC", VALIDATION_ACCURACY)
-    print("LOSS", VALIDATION_LOSS)
 
