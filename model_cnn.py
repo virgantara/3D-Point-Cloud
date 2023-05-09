@@ -93,21 +93,24 @@ X_train, X_test, y_train, y_test = read_voxel_our(vx=VOXEL_X, vy=VOXEL_Y, vz=VOX
 NUM_EPOCH = 50
 def get_model(input_shape, nclasses=10):
     x_input = tf.keras.layers.Input(shape=input_shape)
-    x = DOConv2D(32, (3, 3), activation='relu')(x_input)
-    x = DOConv2D(64, (2, 2), activation='relu')(x)
-    x = DOConv2D(64, (2, 2), activation='relu')(x)
+    x = DOConv2D(384, (3, 3), activation='relu')(x_input)
+    x = DOConv2D(16, (2, 2), activation='relu')(x)
+    x = DOConv2D(512, (2, 2), activation='relu')(x)
+    # x = DOConv2D(32, (3, 3), activation='relu')(x_input)
+    # x = DOConv2D(64, (2, 2), activation='relu')(x)
+    # x = DOConv2D(64, (2, 2), activation='relu')(x)
     x = tf.keras.layers.Flatten()(x)
 
     x = tf.keras.layers.Dense(nclasses, activation='softmax')(x)
     model = tf.keras.models.Model(inputs=x_input, outputs=x)
-
+    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001),
+                  loss='categorical_crossentropy',
+                  metrics=['accuracy'])
     return model
 
 model = get_model(input_shape=(16,16,16),nclasses=NUM_CLASSES)
 model.summary()
-model.compile(optimizer='adam',
-             loss = 'categorical_crossentropy',
-             metrics=['accuracy'])
+
 callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=10)
 history = model.fit(X_train, y_train, epochs=NUM_EPOCH, verbose=1,
                             validation_split=0.2, callbacks=[callback])

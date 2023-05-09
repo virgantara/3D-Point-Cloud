@@ -14,7 +14,7 @@ from helper import *
 
 dataset_path = "/home/virgantara/PythonProjects/LiDAROuster/20230301/PCD_Cropped/45Deg/"
 # dataset_path = ""
-pcd_file_path = os.path.join(dataset_path,"tangan_atas_samping","cropped_obj_000030.pcd")
+pcd_file_path = os.path.join(dataset_path,"tangan_atas_samping","cropped_obj_000050.pcd")
 
 pcd = o3d.io.read_point_cloud(pcd_file_path)
 viewer = o3d.visualization.Visualizer()
@@ -36,7 +36,7 @@ bbox_max = np.array([4,1.8,1])
 # viewer.add_geometry(bbox)
 
 opt = viewer.get_render_option()
-opt.show_coordinate_frame = True
+# opt.show_coordinate_frame = True
 opt.line_width = 0.1
 opt.background_color = np.asarray([1, 1, 1])
 viewer.run()
