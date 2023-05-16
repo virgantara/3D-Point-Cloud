@@ -14,7 +14,7 @@ from helper import *
 
 dataset_path = "/home/virgantara/PythonProjects/LiDAROuster/20230301/PCD_Cropped/45Deg/"
 # dataset_path = ""
-pcd_file_path = os.path.join(dataset_path,"tangan_atas_samping","cropped_obj_000050.pcd")
+pcd_file_path = os.path.join(dataset_path,"tangan_atas","cropped_obj_000010.pcd")
 
 pcd = o3d.io.read_point_cloud(pcd_file_path)
 viewer = o3d.visualization.Visualizer()
