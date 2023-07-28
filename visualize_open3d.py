@@ -20,6 +20,8 @@ pcd = o3d.io.read_point_cloud(pcd_file_path)
 viewer = o3d.visualization.Visualizer()
 viewer.create_window()
 viewer.add_geometry(pcd)
+xyz_pts = np.asarray(pcd.points)
+print(xyz_pts.shape)
 # voxel_grid = o3d.geometry.VoxelGrid.create_from_point_cloud(pcd, voxel_size=0.02)
 # viewer.add_geometry(voxel_grid)
 #
