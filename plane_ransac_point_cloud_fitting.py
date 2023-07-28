@@ -2,6 +2,7 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits import mplot3d
+
 import open3d as o3d
 from sklearn.neighbors import KDTree
 dataset_path = "/home/virgantara/PythonProjects/LiDAROuster/20230301/PCD_Cropped/45Deg/duduk_depan/cropped_obj_000010.pcd"
@@ -86,7 +87,22 @@ mask[idx_inliers] = False
 
 outliers=xyz[mask]
 
-ax = plt.axes(projection='3d')
-ax.scatter(inliers[:,0], inliers[:,1], inliers[:,2], c = 'cornflowerblue', s=0.02)
-ax.scatter(outliers[:,0], outliers[:,1], outliers[:,2], c = 'salmon', s=0.02)
-plt.show()
+print(inliers.shape)
+
+# pcd = o3d.geometry.PointCloud()
+# pcd.points = o3d.utility.Vector3dVector(inliers)
+# viewer = o3d.visualization.Visualizer()
+# viewer.create_window()
+# viewer.add_geometry(pcd)
+#
+# opt = viewer.get_render_option()
+# # opt.show_coordinate_frame = True
+# opt.line_width = 0.1
+# opt.background_color = np.asarray([1, 1, 1])
+# viewer.run()
+# viewer.destroy_window()
+
+# ax = plt.axes(projection='3d')
+# ax.scatter(inliers[:,0], inliers[:,1], inliers[:,2], c = 'cornflowerblue', s=0.02)
+# ax.scatter(outliers[:,0], outliers[:,1], outliers[:,2], c = 'salmon', s=0.02)
+# plt.show()
