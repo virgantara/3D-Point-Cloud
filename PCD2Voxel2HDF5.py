@@ -173,8 +173,10 @@ def generate_hdf5v2(DIR, filename):
         print("Done!")
 
 #
-DATA_DIR = "/home/virgantara/PythonProjects/LiDAROuster/20230301/PCD_Cropped/merged_half"
-generate_hdf5v2(DATA_DIR, "data_voxel_45deg_merged_half_"+str(VOXEL_X)+"_"+str(VOXEL_Y)+"_"+str(VOXEL_Z)+".h5")
+# DATA_DIR = "/home/virgantara/PythonProjects/LiDAROuster/20230301/PCD_Cropped/merged_half"
+DATA_DIR = "dataset/ReducedNoise"
+generate_hdf5v2(DATA_DIR, "voxels/data_voxel_reduced_noise.h5")
+# generate_hdf5v2(DATA_DIR, "data_voxel_45deg_merged_half_"+str(VOXEL_X)+"_"+str(VOXEL_Y)+"_"+str(VOXEL_Z)+".h5")
 #
 #
 # generate_hdf5(DATA_DIR, "data_voxel_10_"+str(VOXEL_SIZE)+".h5")

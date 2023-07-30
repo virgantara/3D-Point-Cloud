@@ -25,9 +25,9 @@ def pcd_to_voxelv2(path):
     voxel_final = voxel_2d.astype('float64')
     return voxel_final
 
-dataset_path = "/home/virgantara/PythonProjects/LiDAROuster/20230301/PCD_Cropped/45Deg/"
+dataset_path = "dataset/ReducedNoise/"
 # dataset_path = ""
-pcd_file_path = os.path.join(dataset_path,"duduk_depan","cropped_obj_000030.pcd")
+pcd_file_path = "dataset/ReducedNoise/duduk/duduk_belakang_cropped_obj_000030.pcd"
 
 vx = pcd_to_voxelv2(pcd_file_path)
 

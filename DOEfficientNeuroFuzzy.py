@@ -70,10 +70,10 @@ class fuzzy_inference_block(tf.keras.layers.Layer):
                            axis=-2, keepdims=False))
         return phi
 
-BASEDATA_PATH = "/media/virgantara/DATA1/Penelitian/Datasets"
+# BASEDATA_PATH = "/media/virgantara/DATA1/Penelitian/Datasets"
 
 # DATA_DIR = os.path.join(BASEDATA_PATH, "")
-DATA_DIR = "dataset/45Deg_merged"
+DATA_DIR = "dataset/ReducedNoise"
 path = Path(DATA_DIR)
 folders = [dir for dir in sorted(os.listdir(path)) if os.path.isdir(path/dir)]
 classes = {folder: i for i, folder in enumerate(folders)};
@@ -110,8 +110,8 @@ def read_voxel_modelnet(nclasses=10, voxelsize=16):
     return X_train, X_test, targets_train, targets_test
 
 
-def read_voxel_our(voxelsize=16):
-    with h5py.File("data_voxel_45deg_merged_half_16_16_16.h5", "r") as hf:
+def read_voxel_our(voxel_path,voxelsize=16):
+    with h5py.File(voxel_path, "r") as hf:
         X = hf["data_points"][:]
         X = np.array(X)
 
@@ -128,11 +128,6 @@ def read_voxel_our(voxelsize=16):
         y_test = to_categorical(y_test).astype(np.int32)
 
     return X_train, X_test, y_train, y_test
-
-NUM_EPOCH = 200
-
-# X_train, X_test, targets_train, targets_test = read_voxel_modelnet(nclasses=NUM_CLASSES, voxelsize=VOXEL_SIZE)
-X_train, X_test, targets_train, targets_test = read_voxel_our(voxelsize=VOXEL_SIZE)
 
 
 
@@ -231,7 +226,7 @@ def EffNet(input_shape, num_classes, plot_model=False):
 
 
 #
-input_shape = VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE
+
 
 def get_model(input_shape, nclasses=10,is_training=False):
     if is_training:
@@ -273,6 +268,12 @@ def get_model(input_shape, nclasses=10,is_training=False):
 
     return model
 # #
+input_shape = VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE
+NUM_EPOCH = 200
+
+# X_train, X_test, targets_train, targets_test = read_voxel_modelnet(nclasses=NUM_CLASSES, voxelsize=VOXEL_SIZE)
+X_train, X_test, targets_train, targets_test = read_voxel_our(voxel_path="voxels/data_voxel_reduced_noise.h5",voxelsize=VOXEL_SIZE)
+
 model = get_model(input_shape, NUM_CLASSES, is_training=True)
 #
 loss, accuracy = model.evaluate(X_test, targets_test)
