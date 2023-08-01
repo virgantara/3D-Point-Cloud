@@ -1,23 +1,33 @@
 import numpy as np
 import open3d as o3d
-
-
+from sklearn.preprocessing import StandardScaler
+from noise_generator import add_gaussian_noise, add_noise, add_salt_and_pepper_noise
 def main():
-    pcd = o3d.read_point_cloud('./data/bun_zipper.ply')
+    pcd = o3d.io.read_point_cloud("dataset/45Deg/tangan_atas/cropped_obj_000018.pcd")
+    # o3d.visualization.draw_geometries([pcd])
+    # add_noise(pcd, 0.01)
+    pcd_copy = np.array(pcd.points)
+    scaler = StandardScaler()
+    pcd_copy = scaler.fit_transform(pcd_copy)
+    pcd.points = o3d.utility.Vector3dVector(pcd_copy)
 
-    add_noise(pcd, 0.004)
+    o3d.visualization.draw_geometries([pcd])
 
+    pcd_noised = add_salt_and_pepper_noise(pcd, probability=0.05)
+    # pcd_noised = add_gaussian_noise(pcd, mean=0, std_dev=0.01)
+    pcd.points = o3d.utility.Vector3dVector(pcd_noised)
+
+
+    o3d.visualization.draw_geometries([pcd])
     # filtering multiple times will reduce the noise significantly
     # but may cause the points distribute unevenly on the surface.
-    guided_filter(pcd, 0.01, 0.1)
-    guided_filter(pcd, 0.01, 0.1)
-    # guided_filter(pcd, 0.01, 0.01)
+    guided_filter(pcd, 0.04, 0.1)
 
-    o3d.draw_geometries([pcd])
+    o3d.visualization.draw_geometries([pcd])
 
 
 def guided_filter(pcd, radius, epsilon):
-    kdtree = o3d.KDTreeFlann(pcd)
+    kdtree = o3d.geometry.KDTreeFlann(pcd)
     points_copy = np.array(pcd.points)
     points = np.asarray(pcd.points)
     num_points = len(pcd.points)
@@ -37,13 +47,8 @@ def guided_filter(pcd, radius, epsilon):
 
         points_copy[i] = A @ points[i] + b
 
-    pcd.points = o3d.Vector3dVector(points_copy)
+    pcd.points = o3d.utility.Vector3dVector(points_copy)
 
-
-def add_noise(pcd, sigma):
-    points = np.asarray(pcd.points)
-    noise = sigma * np.random.randn(points.shape[0], points.shape[1])
-    points += noise
 
 
 if __name__ == '__main__':

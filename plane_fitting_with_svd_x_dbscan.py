@@ -67,6 +67,19 @@ def process_fitting(pcd_path):
 
     return human_only_pts
 
+def extract_ground_points(pcd_path):
+    pcd = o3d.io.read_point_cloud(pcd_path)
+
+    xyz_pointcloud = np.asarray((pcd.points))
+
+    ground_estimator = GroundPlaneFitting(th_dist=0.03) #Instantiate one of the Estimators
+
+    ground_idxs = ground_estimator.estimate_ground(xyz_pointcloud)
+
+    ground_pcl = xyz_pointcloud[ground_idxs]
+
+    return ground_pcl
+
 base_path = "/home/virgantara/PythonProjects/LiDAROuster/20230301/PCD_Cropped/45Deg/"
 folders = sorted(glob.glob(os.path.join(base_path, "*")))
 for i, folder in enumerate(folders):
@@ -74,7 +87,7 @@ for i, folder in enumerate(folders):
     print("processing class: {}".format(os.path.basename(folder)))
 
     folder_name = Path(folder).stem
-    save_path = "dataset/ReducedNoise/"+folder_name
+    save_path = "dataset/NoGroundPoints/"+folder_name
     if not os.path.exists(save_path):
         os.mkdir(save_path)
 
@@ -83,7 +96,7 @@ for i, folder in enumerate(folders):
 
         fname = Path(fdata).stem
         print("Processing file ", fname)
-        pcd_out = process_fitting(fdata)
+        pcd_out = extract_ground_points(fdata)
         if pcd_out.shape[0] > 0:
 
             pcd = o3d.geometry.PointCloud()
