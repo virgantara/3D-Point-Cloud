@@ -80,6 +80,19 @@ def extract_ground_points(pcd_path):
 
     return ground_pcl
 
+def extract_human_only_points(pcd_path):
+    pcd = o3d.io.read_point_cloud(pcd_path)
+
+    xyz_pointcloud = np.asarray((pcd.points))
+
+    ground_estimator = GroundPlaneFitting(th_dist=0.03) #Instantiate one of the Estimators
+
+    ground_idxs = ground_estimator.estimate_ground(xyz_pointcloud)
+
+    human_pts = [not elem for elem in ground_idxs]
+    human_pts = xyz_pointcloud[human_pts]
+    return human_pts
+
 base_path = "/home/virgantara/PythonProjects/LiDAROuster/20230301/PCD_Cropped/45Deg/"
 folders = sorted(glob.glob(os.path.join(base_path, "*")))
 for i, folder in enumerate(folders):
@@ -87,7 +100,7 @@ for i, folder in enumerate(folders):
     print("processing class: {}".format(os.path.basename(folder)))
 
     folder_name = Path(folder).stem
-    save_path = "dataset/NoGroundPoints/"+folder_name
+    save_path = "dataset/HumanOnly/"+folder_name
     if not os.path.exists(save_path):
         os.mkdir(save_path)
 
@@ -96,7 +109,7 @@ for i, folder in enumerate(folders):
 
         fname = Path(fdata).stem
         print("Processing file ", fname)
-        pcd_out = extract_ground_points(fdata)
+        pcd_out = extract_human_only_points(fdata)
         if pcd_out.shape[0] > 0:
 
             pcd = o3d.geometry.PointCloud()
