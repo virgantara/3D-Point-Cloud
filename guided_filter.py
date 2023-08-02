@@ -34,7 +34,7 @@ def plot_pc(point_cloud):
 def main():
     folder_name = "tangan_atas"
     list_file_name = []
-    file = open('mapping_score_denoise_'+folder_name+'.csv', 'w', newline='')
+    file = open('mapping_mls_'+folder_name+'.csv', 'w', newline='')
     csv_writer = csv.writer(file)
     for indeks_number in range(1,7):
         # pcd = o3d.io.read_point_cloud("dataset/HumanOnly/tangan_atas/tangan_atas_cropped_obj_000018.pcd")
@@ -59,7 +59,7 @@ def main():
         # pcd_denoised = guided_filter(pcd, 0.25, 0.1)
         # pcd.points = o3d.utility.Vector3dVector(pcd_denoised)
 
-        output_path = "sample/input_score_denoise_"+folder_name+"_"+str(indeks_number)+".xyz"
+        output_path = "sample/input_mls_"+folder_name+"_"+str(indeks_number)+".xyz"
         csv_writer.writerow([str(indeks_number), input_path,output_path])
         o3d.io.write_point_cloud(output_path, pcd, write_ascii=True)
         # o3d.io.write_point_cloud(output_path, pcd)
