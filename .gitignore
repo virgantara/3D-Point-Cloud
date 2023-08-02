@@ -4,4 +4,5 @@ pic/**
 __pycache__/**
 *.h5
 *.csv
+*.xyz
 data_voxel**

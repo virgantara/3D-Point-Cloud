@@ -1,6 +1,30 @@
 import numpy as np
 from scipy.spatial.distance import cdist
 
+def chamfer_distance(point_set1, point_set2):
+    """
+    Calculate the Chamfer Distance between two point sets.
+
+    Parameters:
+        point_set1 (numpy array): The first set of points represented as a numpy array where each row is a point with (x, y, z) coordinates.
+        point_set2 (numpy array): The second set of points represented as a numpy array where each row is a point with (x, y, z) coordinates.
+
+    Returns:
+        float: The Chamfer Distance between the two point sets.
+    """
+    # Calculate pairwise distances between points in both sets
+    distances_set1_to_set2 = cdist(point_set1, point_set2)
+    distances_set2_to_set1 = cdist(point_set2, point_set1)
+
+    # Find the minimum distance for each point in each set
+    min_distances_set1 = np.min(distances_set1_to_set2, axis=1)
+    min_distances_set2 = np.min(distances_set2_to_set1, axis=1)
+
+    # Sum up the distances from each point in each set to its nearest neighbor in the other set
+    chamfer_distance = np.sum(min_distances_set1) + np.sum(min_distances_set2)
+
+    return chamfer_distance
+
 def hausdorff_distance(point_cloud1, point_cloud2):
     """
     Calculate the Hausdorff Distance between two 3D point clouds.
@@ -67,3 +91,25 @@ def rmse(point_cloud1, point_cloud2):
     rmse = np.sqrt(mean_squared_distance)
 
     return rmse
+
+def point_cloud_mae(point_cloud1, point_cloud2):
+    """
+    Calculate the Mean Absolute Error (MAE) between two 3D point clouds.
+
+    Parameters:
+        point_cloud1 (numpy array): The first 3D point cloud represented as a numpy array where each row is a point with (x, y, z) coordinates.
+        point_cloud2 (numpy array): The second 3D point cloud represented as a numpy array where each row is a point with (x, y, z) coordinates.
+
+    Returns:
+        float: The Mean Absolute Error (MAE) between the two point clouds.
+    """
+    # Ensure that both point clouds have the same number of points
+    assert point_cloud1.shape == point_cloud2.shape, "Both point clouds must have the same number of points."
+
+    # Calculate the absolute difference between corresponding points in the two point clouds
+    absolute_errors = np.abs(point_cloud1 - point_cloud2)
+
+    # Calculate the mean absolute error
+    mae = np.mean(absolute_errors)
+
+    return mae

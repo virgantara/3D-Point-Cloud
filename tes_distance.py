@@ -1,35 +1,62 @@
 import numpy as np
 from scipy.spatial.distance import cdist
-from noise_removal_evaluator import hausdorff_distance, point_to_point_distance, rmse
+from noise_removal_evaluator import *
 import open3d as o3d
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
+import csv
+import os
+
+folder_names = ['berbaring','berdiri','bungkuk','duduk','jongkok','tangan_atas']
+# folder_names = ['berbaring']
+list_rmse = []
+list_hd = []
+list_p2p = []
+list_mae = []
+list_cd = []
+for folder_name in folder_names:
+    with open('mapping_score_denoise_gf2_'+folder_name+".csv") as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=",")
+        for row in csv_reader:
+            print(row)
+            dir_path = "sample"
+            pcd = o3d.io.read_point_cloud(os.path.join(dir_path,row[1]))
+            pcd_denoised = o3d.io.read_point_cloud(os.path.join(dir_path,row[2]))
+# pcd = o3d.io.read_point_cloud("/home/virgantara/PythonProjects/PointCleanNet/data/pointCleanNetDataset/galera100k_noise_white_1.00e-02.xyz")
+# pcd_denoised = o3d.io.read_point_cloud("/home/virgantara/PythonProjects/PointCleanNet/noise_removal/results/galera100k_noise_white_1.00e-02_0.xyz")
+# o3d.visualization.draw_geometries([pcd])
+# o3d.visualization.draw_geometries([pcd_denoised])
+
+            ground_truth_point_cloud = np.asarray(pcd.points)
+            denoised_point_cloud = np.asarray(pcd_denoised.points)
+            distance = rmse(ground_truth_point_cloud, denoised_point_cloud)
+            # print("RMSE:", distance)
+            list_rmse.append(distance)
 #
-# pcd = o3d.io.read_point_cloud("sample/input.xyz")
-# pcd_denoised = o3d.io.read_point_cloud("sample/output.xyz")
-pcd = o3d.io.read_point_cloud("/home/virgantara/PythonProjects/PointCleanNet/data/pointCleanNetDataset/galera100k_noise_white_1.00e-02.xyz")
-pcd_denoised = o3d.io.read_point_cloud("/home/virgantara/PythonProjects/PointCleanNet/noise_removal/results/galera100k_noise_white_1.00e-02_0.xyz")
-o3d.visualization.draw_geometries([pcd])
-o3d.visualization.draw_geometries([pcd_denoised])
-# # Example ground truth (clean) point cloud
-# ground_truth_point_cloud = np.array([[1.0, 2.0, 3.0],
-#                                     [4.0, 5.0, 6.0],
-#                                     [7.0, 8.0, 9.0]])
+            distance = hausdorff_distance(ground_truth_point_cloud, denoised_point_cloud)
+            # print("Hausdorff Distance:", distance)
+            list_hd.append(distance)
+            #
+            distance = point_to_point_distance(ground_truth_point_cloud, denoised_point_cloud)
+            # print("P2P Distance:", np.mean(distance))
+            list_p2p.append(np.mean(distance))
+
+            distance = chamfer_distance(ground_truth_point_cloud, denoised_point_cloud)
+            # print("Chamfer Distance:", np.mean(distance))
+            list_cd.append(distance)
+
+            distance = point_cloud_mae(ground_truth_point_cloud, denoised_point_cloud)
+            # print("MAE:", distance)
+            list_mae.append(distance)
 #
-# # Example denoised (or noisy) point cloud
-# denoised_point_cloud = np.array([[2.0, 1.5, 3.2],
-#                                  [4.1, 5.2, 6.5],
-#                                  [7.5, 8.1, 8.8]])
-#
 
-ground_truth_point_cloud = np.asarray(pcd.points)
-denoised_point_cloud = np.asarray(pcd_denoised.points)
-distance = rmse(ground_truth_point_cloud, denoised_point_cloud)
-print("RMSE:", distance)
-
-distance = hausdorff_distance(ground_truth_point_cloud, denoised_point_cloud)
-print("Hausdorff Distance:", distance)
-
-distance = point_to_point_distance(ground_truth_point_cloud, denoised_point_cloud)
-print("P2P Distance:", np.mean(distance))
-
-
+print("AVG RMSE",np.mean(list_rmse))
+print("AVG MAE",np.mean(list_mae))
+print("AVG P2P",np.mean(list_p2p))
+print("AVG HD",np.mean(list_hd))
+print("AVG CD",np.mean(list_cd))
+print("")
+print("STD RMSE",np.std(list_rmse))
+print("STD MAE",np.std(list_mae))
+print("STD P2P",np.std(list_p2p))
+print("STD HD",np.std(list_hd))
+print("STD CD",np.std(list_cd))
