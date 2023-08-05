@@ -1,7 +1,7 @@
 from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
-import pcl
+
 import open3d as o3d
 
 

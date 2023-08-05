@@ -82,7 +82,7 @@ NUM_CLASSES = np.array(folders).shape[0]
 oversample = SMOTE()
 
 def read_voxel_modelnet(nclasses=10, voxelsize=16):
-    with h5py.File("data_voxel_" + str(nclasses) + "_" + str(voxelsize) + ".h5", "r") as hf:
+    with h5py.File("voxels/data_voxel_" + str(nclasses) + "_" + str(voxelsize) + ".h5", "r") as hf:
         X_train = hf["X_train"][:]
         X_train = np.array(X_train)
 
@@ -269,12 +269,12 @@ def get_model(input_shape, nclasses=10,is_training=False):
     return model
 # #
 input_shape = VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE
-NUM_EPOCH = 200
+NUM_EPOCH = 50
+NUM_CLASSES = 40
+X_train, X_test, targets_train, targets_test = read_voxel_modelnet(nclasses=NUM_CLASSES, voxelsize=VOXEL_SIZE)
+# X_train, X_test, targets_train, targets_test = read_voxel_our(voxel_path="voxels/data_voxel_reduced_noise.h5",voxelsize=VOXEL_SIZE)
 
-# X_train, X_test, targets_train, targets_test = read_voxel_modelnet(nclasses=NUM_CLASSES, voxelsize=VOXEL_SIZE)
-X_train, X_test, targets_train, targets_test = read_voxel_our(voxel_path="voxels/data_voxel_reduced_noise.h5",voxelsize=VOXEL_SIZE)
-
-model = get_model(input_shape, NUM_CLASSES, is_training=True)
+model = get_model(input_shape, NUM_CLASSES, is_training=False)
 #
 loss, accuracy = model.evaluate(X_test, targets_test)
 

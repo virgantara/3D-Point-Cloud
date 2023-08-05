@@ -12,11 +12,11 @@ from helper import *
 # Column 8-10: 	  	maximum bounds (x-y-z)
 # Column 11: 	  	visibility (0 = visible, 1 = partially visible)
 
-dataset_path = "/home/virgantara/PythonProjects/LiDAROuster/20230301/PCD_Cropped/45Deg/"
+dataset_path = "dataset/ReducedNoise/tangan_atas/tangan_atas_cropped_obj_000018.pcd"
 # dataset_path = ""
-pcd_file_path = os.path.join(dataset_path,"tangan_atas","cropped_obj_000010.pcd")
+# pcd_file_path = os.path.join(dataset_path,"tangan_atas","cropped_obj_000010.pcd")
 
-pcd = o3d.io.read_point_cloud(pcd_file_path)
+pcd = o3d.io.read_point_cloud(dataset_path)
 viewer = o3d.visualization.Visualizer()
 viewer.create_window()
 viewer.add_geometry(pcd)
