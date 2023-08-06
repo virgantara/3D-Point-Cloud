@@ -82,30 +82,28 @@ NUM_CLASSES = np.array(folders).shape[0]
 oversample = SMOTE()
 
 def read_voxel_modelnet(nclasses=10, voxelsize=16):
-    with h5py.File("voxels/data_voxel_" + str(nclasses) + "_" + str(voxelsize) + ".h5", "r") as hf:
-        X_train = hf["X_train"][:]
+    with h5py.File("voxels/modelnet40_voxel_train.h5", "r") as hf:
+        X_train = hf["data"][:]
         X_train = np.array(X_train)
 
-        targets_train = hf["y_train"][:]
+        targets_train = hf["label"][:]
 
-        X_test = hf["X_test"][:]
+    with h5py.File("voxels/modelnet40_voxel_test.h5", "r") as hf:
+        X_test = hf["data"][:]
         X_test = np.array(X_test)
 
-        targets_test = hf["y_test"][:]
-        test_y = targets_test
-        # Determine sample shape
-        sample_shape = (voxelsize, voxelsize, voxelsize)
+        targets_test = hf["label"][:]
 
-        X_train, targets_train = oversample.fit_resample(X_train, targets_train)
-        X_train = np.array(X_train)
+    # X_train, targets_train = oversample.fit_resample(X_train, targets_train)
+    # X_train = np.array(X_train)
+    #
+    # X_test, targets_test = oversample.fit_resample(X_test, targets_test)
+    #
+    # X_train = X_train.reshape(X_train.shape[0], voxelsize, voxelsize, voxelsize)
+    # X_test = X_test.reshape(X_test.shape[0], voxelsize, voxelsize, voxelsize)
 
-        X_test, targets_test = oversample.fit_resample(X_test, targets_test)
-
-        X_train = X_train.reshape(X_train.shape[0], voxelsize, voxelsize, voxelsize)
-        X_test = X_test.reshape(X_test.shape[0], voxelsize, voxelsize, voxelsize)
-
-        targets_train = to_categorical(targets_train).astype(np.int32)
-        targets_test = to_categorical(targets_test).astype(np.int32)
+    targets_train = to_categorical(targets_train).astype(np.int32)
+    targets_test = to_categorical(targets_test).astype(np.int32)
 
     return X_train, X_test, targets_train, targets_test
 
@@ -213,7 +211,7 @@ def EffNet(input_shape, num_classes, plot_model=False):
         fuzzy_inference.append(f_block)
 
     merged = concatenate(fuzzy_inference, axis=1)
-
+    # merged = x
     #     output = Dense(n_classes, activation='softmax')(merged)
 
     x = tf.keras.layers.Dense(num_classes, activation='softmax')(merged)
@@ -235,7 +233,7 @@ def get_model(input_shape, nclasses=10,is_training=False):
         # tf.keras.utils.plot_model(model,show_shapes=True)
         model.summary()
 
-        model.compile(optimizer=tf.keras.optimizers.RMSprop(),
+        model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
                       loss='categorical_crossentropy',
                       metrics=['accuracy'])
 
@@ -274,7 +272,7 @@ NUM_CLASSES = 40
 X_train, X_test, targets_train, targets_test = read_voxel_modelnet(nclasses=NUM_CLASSES, voxelsize=VOXEL_SIZE)
 # X_train, X_test, targets_train, targets_test = read_voxel_our(voxel_path="voxels/data_voxel_reduced_noise.h5",voxelsize=VOXEL_SIZE)
 
-model = get_model(input_shape, NUM_CLASSES, is_training=False)
+model = get_model(input_shape, NUM_CLASSES, is_training=True)
 #
 loss, accuracy = model.evaluate(X_test, targets_test)
 
@@ -287,5 +285,5 @@ y_pred = np.argmax(y_pred, axis=1)
 
 y_test = np.argmax(targets_test, axis=1)
 #
-report = metrics.classification_report(y_test, y_pred,target_names=labels)
+report = metrics.classification_report(y_test, y_pred)
 print(report)

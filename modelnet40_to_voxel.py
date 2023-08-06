@@ -30,7 +30,7 @@ def convert_modelnet40_to_voxel(partition):
             all_label.append(lb)
 
 
-    with h5py.File('modelnet40_voxel_'+partition+'.h5', 'w') as f:
+    with h5py.File('voxels/modelnet40_voxel_'+partition+'.h5', 'w') as f:
         f.create_dataset("data", data=np.asarray(all_data))
         f.create_dataset("label", data=np.asarray(all_label))
 

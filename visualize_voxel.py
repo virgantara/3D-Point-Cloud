@@ -27,7 +27,7 @@ def pcd_to_voxelv2(path):
 
 dataset_path = "dataset/ReducedNoise/"
 # dataset_path = ""
-pcd_file_path = "dataset/ReducedNoise/duduk/duduk_belakang_cropped_obj_000030.pcd"
+pcd_file_path = "dataset/45Deg/tangan_atas/cropped_obj_000018.pcd"
 
 vx = pcd_to_voxelv2(pcd_file_path)
 
