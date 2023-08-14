@@ -9,7 +9,7 @@ import open3d as o3d
 
 
 
-data_path = 'dataset/45Deg_merged'
+data_path = 'dataset/ReducedNoise'
 
 def points3d_to_voxel(points, voxel_size=16):
     voxel_grid = VoxelGrid(points, x_y_z=[voxel_size, voxel_size, voxel_size])
@@ -33,7 +33,8 @@ def convert_to_voxel():
             pcd = o3d.io.read_point_cloud(os.path.join(data_path, folder, f))
             data = np.asarray(pcd.points).astype('float64')
             # label = np.asarray(folder).astype('int32')
-            dt = np.zeros((3500, 3), dtype='float64')
+            print(data.shape)
+            dt = np.zeros((2900, 3), dtype='float64')
             for i,val in enumerate(data):
                 dt[i] = val
             # for i, d in enumerate(dt):
@@ -44,7 +45,7 @@ def convert_to_voxel():
 
         indeks += 1
 
-    with h5py.File('voxels/human_pose_raw.h5', 'w') as f:
+    with h5py.File('voxels/human_pose_no_ground_point.h5', 'w') as f:
         f.create_dataset("data", data=np.asarray(all_data),dtype='float64')
         f.create_dataset("label", data=np.asarray(all_label))
 
