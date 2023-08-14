@@ -14,7 +14,8 @@ from helper import *
 # Column 8-10: 	  	maximum bounds (x-y-z)
 # Column 11: 	  	visibility (0 = visible, 1 = partially visible)
 
-dataset_path = "dataset/45Deg_merged/standing/18.pcd"
+dataset_path = "sample/clean/input_point_clean_net_0.xyz"
+# dataset_path = "dataset/45Deg_merged/standing/18.pcd"
 # dataset_path = ""
 # pcd_file_path = os.path.join(dataset_path,"tangan_atas","cropped_obj_000010.pcd")
 
@@ -39,6 +40,8 @@ pcd_noisy.points = o3d.utility.Vector3dVector(pcd_noised)
 noisy_color = np.array([1, 0, 0])
 pcd_noisy.paint_uniform_color(noisy_color)
 viewer.add_geometry(pcd_noisy)
+
+o3d.io.write_point_cloud("sample/noisy/input_point_clean_net_0.xyz", pcd_noisy, write_ascii=True)
 # # print("After",np.asarray(pcd.points).shape)
 
 # o3d.visualization.draw_geometries([pcd])
