@@ -1,5 +1,5 @@
 import os.path
-
+from pathlib import Path
 import open3d as o3d
 import numpy as np
 import re
@@ -14,18 +14,50 @@ from helper import *
 # Column 8-10: 	  	maximum bounds (x-y-z)
 # Column 11: 	  	visibility (0 = visible, 1 = partially visible)
 
-dataset_path = "sample/clean/input_point_clean_net_0.xyz"
+def generate_noisy_pcd():
+    for f in os.listdir("sample/clean"):
+        dataset_path = os.path.join("sample", "clean", f)  # sample/clean/input_point_clean_net_0.xyz"
+        # dataset_path = "dataset/45Deg_merged/standing/18.pcd"
+        # dataset_path = ""
+        # pcd_file_path = os.path.join(dataset_path,"tangan_atas","cropped_obj_000010.pcd")
+
+        pcd = o3d.io.read_point_cloud(dataset_path)
+
+        scaler = MinMaxScaler()
+        pcd_copy = scaler.fit_transform(pcd.points)
+        xyz_pts = np.asarray(pcd.points)
+
+        pcd.points = o3d.utility.Vector3dVector(pcd_copy)
+        pcd.paint_uniform_color(np.array([0, 0, 1]))
+        # viewer.add_geometry(pcd)
+        # o3d.visualization.draw_geometries([pcd])
+        # print("Before",np.asarray(pcd.points).shape)
+        pcd_noisy = o3d.geometry.PointCloud()
+        pcd_noisy.points = o3d.utility.Vector3dVector(pcd_copy)
+        pcd_noised = add_gaussian_noise(pcd_noisy, mean=0.01, std_dev=0.015)
+
+        pcd_noisy.points = o3d.utility.Vector3dVector(pcd_noised)
+        noisy_color = np.array([1, 0, 0])
+        pcd_noisy.paint_uniform_color(noisy_color)
+        # viewer.add_geometry(pcd_noisy)
+
+        fname = Path(dataset_path).stem
+        o3d.io.write_point_cloud("sample/noisy/" + fname + "_gaussian.xyz", pcd_noisy, write_ascii=True)
+
+viewer = o3d.visualization.Visualizer()
+viewer.create_window()
+dataset_path = "sample/clean/input_point_clean_net_10.xyz"
+
+# dataset_path = "sample/noisy/input_point_clean_net_10_gaussian.xyz"
 # dataset_path = "dataset/45Deg_merged/standing/18.pcd"
 # dataset_path = ""
 # pcd_file_path = os.path.join(dataset_path,"tangan_atas","cropped_obj_000010.pcd")
 
 pcd = o3d.io.read_point_cloud(dataset_path)
-viewer = o3d.visualization.Visualizer()
-viewer.create_window()
+
 
 scaler = MinMaxScaler()
 pcd_copy = scaler.fit_transform(pcd.points)
-xyz_pts = np.asarray(pcd.points)
 
 pcd.points = o3d.utility.Vector3dVector(pcd_copy)
 pcd.paint_uniform_color(np.array([0, 0, 1]))
@@ -34,38 +66,17 @@ viewer.add_geometry(pcd)
 # print("Before",np.asarray(pcd.points).shape)
 pcd_noisy = o3d.geometry.PointCloud()
 pcd_noisy.points = o3d.utility.Vector3dVector(pcd_copy)
-pcd_noised = add_gaussian_noise(pcd_noisy, mean=0.01, std_dev=0.025)
+pcd_noised = add_gaussian_noise(pcd_noisy, mean=0.01, std_dev=0.015)
 
 pcd_noisy.points = o3d.utility.Vector3dVector(pcd_noised)
 noisy_color = np.array([1, 0, 0])
 pcd_noisy.paint_uniform_color(noisy_color)
-viewer.add_geometry(pcd_noisy)
+# viewer.add_geometry(pcd_noisy)
 
-o3d.io.write_point_cloud("sample/noisy/input_point_clean_net_0.xyz", pcd_noisy, write_ascii=True)
-# # print("After",np.asarray(pcd.points).shape)
-
-# o3d.visualization.draw_geometries([pcd])
-# viewer.add_geometry(pcd)
-# print(xyz_pts.shape)
-# voxel_grid = o3d.geometry.VoxelGrid.create_from_point_cloud(pcd, voxel_size=0.02)
-# viewer.add_geometry(voxel_grid)
-#
-# bbox_min = np.array([2,-0.7,-1])
-# bbox_max = np.array([4,1,1])
-#
-# bbox_min = np.array([2,-1.6,-1])
-# bbox_max = np.array([4,1.8,1])
-
-# bbox = o3d.geometry.AxisAlignedBoundingBox()
-# bbox.color = np.array([1,0,0])
-# bbox.min_bound = bbox_min
-# bbox.max_bound = bbox_max
-# viewer.add_geometry(bbox)
-#
 opt = viewer.get_render_option()
-# opt.show_coordinate_frame = True
+opt.show_coordinate_frame = False
 opt.line_width = 0.1
-opt.background_color = np.asarray([1, 1, 1])
+opt.background_color = np.asarray([0.7, 0.7,0.7])
 viewer.run()
 viewer.destroy_window()
 
