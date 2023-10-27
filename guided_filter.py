@@ -6,7 +6,8 @@ from noise_removal_evaluator import *
 import matplotlib.pyplot as plt
 import csv
 import pandas as pd
-
+import os
+from pathlib import Path
 def plot_pc(point_cloud):
     # Create a 3D scatter plot
     fig = plt.figure()
@@ -30,40 +31,42 @@ def plot_pc(point_cloud):
 
     # Show the plot
     plt.show()
+def guided_filter(pcd, radius, epsilon):
+    kdtree = o3d.geometry.KDTreeFlann(pcd)
+    points_copy = np.array(pcd.points)
+    points = np.asarray(pcd.points)
+    num_points = len(pcd.points)
+
+    for i in range(num_points):
+        k, idx, _ = kdtree.search_radius_vector_3d(pcd.points[i], radius)
+        if k < 3:
+            continue
+
+        neighbors = points[idx, :]
+        mean = np.mean(neighbors, 0)
+        cov = np.cov(neighbors.T)
+        e = np.linalg.inv(cov + epsilon * np.eye(3))
+
+        A = cov @ e
+        b = mean - A @ mean
+
+        points_copy[i] = A @ points[i] + b
+
+
+    return points_copy
 
 def main():
-    folder_name = "tangan_atas"
-    list_file_name = []
-    file = open('mapping_mls_'+folder_name+'.csv', 'w', newline='')
-    csv_writer = csv.writer(file)
-    for indeks_number in range(1,7):
-        # pcd = o3d.io.read_point_cloud("dataset/HumanOnly/tangan_atas/tangan_atas_cropped_obj_000018.pcd")
-        input_path = "dataset/ReducedNoise/"+folder_name+"/"+folder_name+"_cropped_obj_0000"+str(indeks_number)+"0.pcd"
-        pcd = o3d.io.read_point_cloud(input_path)
-        # o3d.visualization.draw_geometries([pcd])
-        # add_noise(pcd, 0.01)
-        pcd_copy = np.array(pcd.points)
-        scaler = MinMaxScaler()
-        pcd_copy = scaler.fit_transform(pcd_copy)
-        pcd.points = o3d.utility.Vector3dVector(pcd_copy)
-        #
-        # # o3d.visualization.draw_geometries([pcd])
-        #
-        pcd_noised = add_salt_and_pepper_noise(pcd, probability=0.05)
-        #
-        pcd.points = o3d.utility.Vector3dVector(pcd_noised)
-        # # o3d.visualization.draw_geometries([pcd])
-        # # filtering multiple times will reduce the noise significantly
-        # # but may cause the points distribute unevenly on the surface.
-        #
-        # pcd_denoised = guided_filter(pcd, 0.25, 0.1)
-        # pcd.points = o3d.utility.Vector3dVector(pcd_denoised)
+    dir_path = "sample/noisy/gaussian_0.02"
+    denoised_path = "sample/denoised_guided_filter"
+    for f in sorted(os.listdir(dir_path)):
+        pcd = o3d.io.read_point_cloud(os.path.join(dir_path, f))
+        xyz_denoised = guided_filter(pcd, radius=0.25, epsilon=0.1)
 
-        output_path = "sample/input_mls_"+folder_name+"_"+str(indeks_number)+".xyz"
-        csv_writer.writerow([str(indeks_number), input_path,output_path])
-        o3d.io.write_point_cloud(output_path, pcd, write_ascii=True)
-        # o3d.io.write_point_cloud(output_path, pcd)
-    file.close()
+        f_name = Path(f).stem
+        output_path = os.path.join(denoised_path, f_name + ".xyz")
+        pcd_denoised = o3d.geometry.PointCloud()
+        pcd_denoised.points = o3d.utility.Vector3dVector(xyz_denoised)
+        o3d.io.write_point_cloud(output_path, pcd_denoised, write_ascii=True)
     # ground_truth_point_cloud = np.asarray(pcd.points)
     # denoised_point_cloud = np.asarray(pcd_denoised)
     # distance = rmse(ground_truth_point_cloud, denoised_point_cloud)
@@ -96,29 +99,7 @@ def main():
     # o3d.visualization.draw_geometries([pcd])
 
 
-def guided_filter(pcd, radius, epsilon):
-    kdtree = o3d.geometry.KDTreeFlann(pcd)
-    points_copy = np.array(pcd.points)
-    points = np.asarray(pcd.points)
-    num_points = len(pcd.points)
 
-    for i in range(num_points):
-        k, idx, _ = kdtree.search_radius_vector_3d(pcd.points[i], radius)
-        if k < 3:
-            continue
-
-        neighbors = points[idx, :]
-        mean = np.mean(neighbors, 0)
-        cov = np.cov(neighbors.T)
-        e = np.linalg.inv(cov + epsilon * np.eye(3))
-
-        A = cov @ e
-        b = mean - A @ mean
-
-        points_copy[i] = A @ points[i] + b
-
-
-    return points_copy
 
 
 if __name__ == '__main__':

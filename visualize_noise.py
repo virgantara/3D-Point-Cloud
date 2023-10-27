@@ -113,5 +113,5 @@ def view_pcd(path):
     viewer.run()
     viewer.destroy_window()
 
-view_pcd(path="dataset/45Deg_merged/standing/75.pcd")
+view_pcd(path="sample/denoised_scorenet/output_score_denoise35.xyz")
 # generate_noisy_pcd()

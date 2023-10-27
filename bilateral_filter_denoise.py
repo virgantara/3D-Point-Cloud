@@ -4,8 +4,24 @@ from bilateral_filter import *
 # from moving_least_square
 import csv
 import os
-
+from pathlib import Path
 folder_names = ['berbaring','berdiri','bungkuk','duduk','jongkok','tangan_atas']
+
+dir_path = "sample/noisy/gaussian_0.02"
+denoised_path = "sample/denoised_bilateral"
+for f in sorted(os.listdir(dir_path)):
+    # pcd = o3d.io.read_point_cloud(os.path.join(dir_path, f))
+    xyz_denoised = run_bilateral_denoising(
+        pcd_path_in=os.path.join(os.path.join(dir_path, f))
+    )
+
+    f_name = Path(f).stem
+    output_path = os.path.join(denoised_path,f_name + ".xyz")
+    pcd_denoised = o3d.geometry.PointCloud()
+    pcd_denoised.points = o3d.utility.Vector3dVector(xyz_denoised)
+    o3d.io.write_point_cloud(output_path, pcd_denoised, write_ascii=True)
+    # print(xyz_denoised.shape)
+
 # folder_names = ['berbaring']
 # list_rmse = []
 # list_hd = []
