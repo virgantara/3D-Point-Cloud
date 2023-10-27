@@ -1,6 +1,23 @@
 import numpy as np
 from scipy.spatial.distance import cdist
 
+def dice_coefficient(point_cloud1, point_cloud2):
+    """
+    Calculate the Dice coefficient for two 3D point clouds.
+
+    Args:
+        point_cloud1 (numpy.ndarray): The first 3D point cloud.
+        point_cloud2 (numpy.ndarray): The second 3D point cloud.
+
+    Returns:
+        float: The Dice coefficient.
+    """
+    intersection = len(set(tuple(point) for point in point_cloud1) & set(tuple(point) for point in point_cloud2))
+    union = len(point_cloud1) + len(point_cloud2)
+
+    dice = (2.0 * intersection) / union
+    return dice
+
 def chamfer_distance(point_set1, point_set2):
     """
     Calculate the Chamfer Distance between two point sets.

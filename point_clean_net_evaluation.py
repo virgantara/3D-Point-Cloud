@@ -13,6 +13,7 @@ list_rmse = []
 list_hd = []
 list_p2p = []; list_mae = []
 list_cd = []
+list_dc = []
 with open("mapping_point_clean_net.csv") as csv_file:
     csv_reader = csv.reader(csv_file, delimiter=",")
     for row in csv_reader:
@@ -42,20 +43,19 @@ with open("mapping_point_clean_net.csv") as csv_file:
                 list_rmse.append(distance)
 # #
                 distance = hausdorff_distance(ground_truth_point_cloud, denoised_point_cloud)
-                # print("Hausdorff Distance:", distance)
                 list_hd.append(distance)
                 #
                 distance = point_to_point_distance(ground_truth_point_cloud, denoised_point_cloud)
-                # print("P2P Distance:", np.mean(distance))
                 list_p2p.append(np.mean(distance))
 
                 distance = chamfer_distance(ground_truth_point_cloud, denoised_point_cloud)
-                # print("Chamfer Distance:", np.mean(distance))
                 list_cd.append(distance)
 
                 distance = point_cloud_mae(ground_truth_point_cloud, denoised_point_cloud)
-                # print("MAE:", distance)
                 list_mae.append(distance)
+
+                distance = dice_coefficient(ground_truth_point_cloud, denoised_point_cloud)
+                list_dc.append(distance)
         #
 
 print("AVG RMSE",np.mean(list_rmse))
@@ -63,6 +63,7 @@ print("AVG MAE",np.mean(list_mae))
 print("AVG P2P",np.mean(list_p2p))
 print("AVG HD",np.mean(list_hd))
 print("AVG CD",np.mean(list_cd))
+print("AVG DC",np.mean(list_dc))
 # print("")
 # print("STD RMSE",np.std(list_rmse))
 # print("STD MAE",np.std(list_mae))

@@ -34,35 +34,3 @@ folder_names = ['berbaring','berdiri','bungkuk','duduk','jongkok','tangan_atas']
 #
 #             ground_truth_point_cloud = np.asarray(pcd.points)
 #             denoised_point_cloud = np.asarray(pcd_denoised.points)
-#             distance = rmse(ground_truth_point_cloud, denoised_point_cloud)
-#             # print("RMSE:", distance)
-#             list_rmse.append(distance)
-# #
-#             distance = hausdorff_distance(ground_truth_point_cloud, denoised_point_cloud)
-#             # print("Hausdorff Distance:", distance)
-#             list_hd.append(distance)
-#             #
-#             distance = point_to_point_distance(ground_truth_point_cloud, denoised_point_cloud)
-#             # print("P2P Distance:", np.mean(distance))
-#             list_p2p.append(np.mean(distance))
-#
-#             distance = chamfer_distance(ground_truth_point_cloud, denoised_point_cloud)
-#             # print("Chamfer Distance:", np.mean(distance))
-#             list_cd.append(distance)
-#
-#             distance = point_cloud_mae(ground_truth_point_cloud, denoised_point_cloud)
-#             # print("MAE:", distance)
-#             list_mae.append(distance)
-# #
-#
-# print("AVG RMSE",np.mean(list_rmse))
-# print("AVG MAE",np.mean(list_mae))
-# print("AVG P2P",np.mean(list_p2p))
-# print("AVG HD",np.mean(list_hd))
-# print("AVG CD",np.mean(list_cd))
-# print("")
-# print("STD RMSE",np.std(list_rmse))
-# print("STD MAE",np.std(list_mae))
-# print("STD P2P",np.std(list_p2p))
-# print("STD HD",np.std(list_hd))
-# print("STD CD",np.std(list_cd))

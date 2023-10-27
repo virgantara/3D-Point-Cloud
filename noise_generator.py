@@ -29,3 +29,21 @@ def add_salt_and_pepper_noise(pcd, probability=0.05):
     noisy_point_cloud[pepper_indices] = np.min(point_cloud)
 
     return noisy_point_cloud
+
+
+def add_laplacian_noise(pcd, scale_parameter = 0.1, size=1):
+    point_cloud = np.asarray(pcd.points)
+    """
+    Add Laplacian noise to a 3D point cloud.
+
+    Args:
+        point_cloud (numpy.ndarray): A numpy array representing the 3D point cloud. Each row is a point (x, y, z).
+        scale_parameter (float): The scale parameter for the Laplacian distribution.
+        size (int): The number of samples to draw for each point (default is 1).
+
+    Returns:
+        numpy.ndarray: A 3D point cloud with Laplacian noise added.
+    """
+
+    noisy_cloud = point_cloud + np.random.laplace(scale=scale_parameter, size=(point_cloud.shape[0], point_cloud.shape[1]))
+    return noisy_cloud
