@@ -1,8 +1,12 @@
-dataset/**
-pic/**
-.idea/**
-__pycache__/**
-*.h5
-*.csv
-*.xyz
-data_voxel**
+# IDE Files
+#-------------------------
+/nbproject/
+.idea/*
+
+## Sublime Text cache files
+*.tmlanguage.cache
+*.tmPreferences.cache
+*.stTheme.cache
+*.sublime-workspace
+*.sublime-project
+
